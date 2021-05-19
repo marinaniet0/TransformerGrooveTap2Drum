@@ -40,7 +40,7 @@ class GrooveMidiDataset(Dataset):
                  hvo_pickle_filename='hvo_sequence_data.obj',
                  filters=filters,
                  max_len=32,
-                 device_str='cpu',
+                 device_str='cuda',
                  tapped_sequence_voice='HH_CLOSED',
                  tapped_sequence_collapsed=False,
                  tapped_sequence_velocity_mode=1,
