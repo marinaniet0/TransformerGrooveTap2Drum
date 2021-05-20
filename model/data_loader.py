@@ -4,83 +4,71 @@ import pandas as pd
 import os
 import pickle
 import sys
+
 sys.path.append('../../hvo_sequence/')
 import numpy as np
 
 from hvo_sequence.hvo_seq import HVO_Sequence
 from hvo_sequence.drum_mappings import ROLAND_REDUCED_MAPPING
 
-filters = {
-    "drummer": None,
-    "session": None,
-    "loop_id": None,
-    "master_id": None,
-    "style_primary": None,
-    "bpm": None,
-    "beat_type": ["beat"],
-    "time_signature": ["4-4"],
-    "full_midi_filename": None,
-    "full_audio_filename": None
+subset_info = {
+    "metadata_csv_filename": 'metadata.csv',
+    "hvo_pickle_filename": 'hvo_sequence_data.obj',
+    "pickle_source_path": "../../preprocessed_dataset/datasets_extracted_locally/GrooveMidi/hvo_0.4.2"
+                          "/Processed_On_17_05_2021_at_22_32_hrs",
+    "subset_name": 'GrooveMIDI_processed_train'
 }
 
-
-def check_if_passes_filters(obj, filters):
-    for key in filters:
-        if filters[key] is not None and obj.to_dict()[key] not in filters[key]:
-            return False
-    return True
+tappify_params = {
+    "tapped_sequence_voice": 'HH_CLOSED',
+    "tapped_sequence_collapsed": False,
+    "tapped_sequence_velocity_mode": 1,
+    "tapped_sequence_offset_mode": 3
+}
 
 
 class GrooveMidiDataset(Dataset):
     def __init__(self,
-                 source_path='../../preprocessed_dataset/datasets_zipped/GrooveMidi/hvo_0.3.0/'
-                             'Processed_On_13_05_2021_at_12_56_hrs',
-                 subset='train',
-                 metadata_csv_filename='metadata.csv',
-                 hvo_pickle_filename='hvo_sequence_data.obj',
-                 filters=filters,
+                 subset,
+                 subset_info=subset_info,
                  max_len=32,
-                 device_str='cuda',
-                 tapped_sequence_voice='HH_CLOSED',
-                 tapped_sequence_collapsed=False,
-                 tapped_sequence_velocity_mode=1,
-                 tapped_sequence_offset_mode=3):
+                 tappify_params=tappify_params):
 
-        subset_str = 'GrooveMIDI_processed_' + subset
-
-        train_file = open(os.path.join(source_path, subset_str, hvo_pickle_filename), 'rb')
-        train_set = pickle.load(train_file)
-        metadata = pd.read_csv(os.path.join(source_path, subset_str, metadata_csv_filename))
+        metadata = pd.read_csv(os.path.join(subset_info["pickle_source_path"], subset_info["subset"],
+                                            subset_info["metadata_csv_filename"]))
 
         self.inputs = []
         self.outputs = []
         self.sequences = []
 
-        tapped_voice_idx = list(ROLAND_REDUCED_MAPPING.keys()).index(tapped_sequence_voice)
+        tapped_voice_idx = list(ROLAND_REDUCED_MAPPING.keys()).index(tappify_params["tapped_sequence_voice"])
 
-        for ix, hvo_seq in enumerate(train_set):
+        for ix, hvo_seq in enumerate(subset):
             if len(hvo_seq.time_signatures) == 1:
                 all_zeros = not np.any(hvo_seq.hvo.flatten())
                 if not all_zeros:
-                    if check_if_passes_filters(metadata.loc[ix], filters):
-                        hvo_seq.drummer = metadata.loc[ix].at["drummer"]
-                        hvo_seq.session = metadata.loc[ix].at["session"]
-                        hvo_seq.master_id = metadata.loc[ix].at["master_id"]
-                        hvo_seq.style_primary = metadata.loc[ix].at["style_primary"]
-                        hvo_seq.style_secondary = metadata.loc[ix].at["style_secondary"]
-                        hvo_seq.beat_type = metadata.loc[ix].at["beat_type"]
+                    hvo_seq.drummer = metadata.loc[ix].at["drummer"]
+                    hvo_seq.session = metadata.loc[ix].at["session"]
+                    hvo_seq.master_id = metadata.loc[ix].at["master_id"]
+                    hvo_seq.style_primary = metadata.loc[ix].at["style_primary"]
+                    hvo_seq.style_secondary = metadata.loc[ix].at["style_secondary"]
+                    hvo_seq.beat_type = metadata.loc[ix].at["beat_type"]
 
-                        pad_count = max(max_len - hvo_seq.hvo.shape[0], 0)
-                        hvo_seq.hvo = np.pad(hvo_seq.hvo, ((0, pad_count), (0, 0)), 'constant')
-                        hvo_seq.hvo = hvo_seq.hvo[:max_len, :]  # in case seq exceeds max len
-                        self.sequences.append(hvo_seq)
-                        self.inputs.append(hvo_seq.flatten_voices(voice_idx=tapped_voice_idx,
-                                                                  reduce_dim=tapped_sequence_collapsed))
-                        self.outputs.append(hvo_seq.hvo)
-
-        dev = torch.device(device_str)
-        self.inputs = torch.Tensor(self.inputs, device=dev).to(torch.float)
-        self.outputs = torch.Tensor(self.outputs, device=dev).to(torch.float)
+                    pad_count = max(max_len - hvo_seq.hvo.shape[0], 0)
+                    hvo_seq.hvo = np.pad(hvo_seq.hvo, ((0, pad_count), (0, 0)), 'constant')
+                    hvo_seq.hvo = hvo_seq.hvo[:max_len, :]  # in case seq exceeds max len
+                    self.sequences.append(hvo_seq)
+                    self.inputs.append(hvo_seq.flatten_voices(voice_idx=tapped_voice_idx,
+                                                              reduce_dim=tappify_params[
+                                                                  "tapped_sequence_collapsed"],
+                                                              offset_aggregator_modes=tappify_params[
+                                                                  "tapped_sequence_offset_mode"],
+                                                              velocity_aggregator_modes=tappify_params[
+                                                                  "tapped_sequence_offset_mode"]))
+                    self.outputs.append(hvo_seq.hvo)
+        dev = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.inputs = torch.FloatTensor(self.inputs, device=dev)
+        self.outputs = torch.FloatTensor(self.outputs, device=dev)
 
     def __len__(self):
         return len(self.sequences)
@@ -90,4 +78,3 @@ class GrooveMidiDataset(Dataset):
 
     def get_hvo_sequence(self, idx):
         return self.sequences[idx]
-
