@@ -67,8 +67,8 @@ class GrooveMidiDataset(Dataset):
                                                                   "tapped_sequence_offset_mode"]))
                     self.outputs.append(hvo_seq.hvo)
         dev = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.inputs = torch.FloatTensor(self.inputs, device=dev)
-        self.outputs = torch.FloatTensor(self.outputs, device=dev)
+        self.inputs = torch.FloatTensor(self.inputs).to(dev)
+        self.outputs = torch.FloatTensor(self.outputs).to(dev)
 
     def __len__(self):
         return len(self.sequences)
