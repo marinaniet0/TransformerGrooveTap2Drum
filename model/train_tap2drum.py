@@ -1,10 +1,26 @@
-
 import sys
+import wandb
+import numpy as np
 from data_loader import GrooveMidiDataset
+
 sys.path.append('../../BaseGrooveTransformers/models/')
 from train import *
 
 if __name__ == "__main__":
+
+    hyperparameter_defaults = dict(
+        d_model=128,
+        n_heads=8,
+        dropout=0.1,
+        num_encoder_layers=1,
+        num_decoder_layers=1,
+        learning_rate=1e-3,
+        batch_size=64,
+        dim_feedforward=1280,
+        epochs=100
+    )
+
+    wandb.init(config=hyperparameter_defaults, project="your-project-name", entity="your-user")
 
     save_info = {
         'checkpoint_path': '../results/',
@@ -28,12 +44,12 @@ if __name__ == "__main__":
 
     # TRANSFORMER MODEL PARAMETERS
     model_parameters = {
-        'd_model': 128,
-        'n_heads': 8,
-        'dim_feedforward': 1280,
-        'dropout': 0.1,
-        'num_encoder_layers': 1,
-        'num_decoder_layers': 1,
+        'd_model': wandb.config.d_model,
+        'n_heads': wandb.config.n_heads,
+        'dim_feedforward': wandb.config.dim_feedforward,
+        'dropout': wandb.config.dropout,
+        'num_encoder_layers': wandb.config.num_encoder_layers,
+        'num_decoder_layers': wandb.config.num_decoder_layers,
         'max_len': 32,
         'embedding_size_src': 27,
         'embedding_size_tgt': 27,
@@ -42,8 +58,8 @@ if __name__ == "__main__":
 
     # TRAINING PARAMETERS
     training_parameters = {
-        'learning_rate': 1e-3,
-        'batch_size': 64
+        'learning_rate': wandb.config.learning_rate,
+        'batch_size': wandb.config.batch_size
     }
 
     # PYTORCH LOSS FUNCTIONS
@@ -52,11 +68,13 @@ if __name__ == "__main__":
 
     model, optimizer, ep = initialize_model(model_parameters, training_parameters, save_info,
                                             load_from_checkpoint=False)
+    wandb.watch(model)
     dataloader = load_dataset(GrooveMidiDataset, subset_info, filters, training_parameters['batch_size'])
 
     epoch_save_div = 10
+    eps = wandb.config.epochs
 
-    while True:
+    for i in np.arange(eps):
         ep += 1
         print(f"Epoch {ep}\n-------------------------------")
         train_loop(dataloader=dataloader, groove_transformer=model, opt=optimizer, epoch=ep,
