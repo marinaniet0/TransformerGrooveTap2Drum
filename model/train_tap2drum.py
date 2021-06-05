@@ -22,8 +22,8 @@ if __name__ == "__main__":
         lr_scheduler_gamma=0.1
     )
 
-    wandb.init(config=hyperparameter_defaults, project="tap2drum", entity="tpelinski")
-
+    wandb.init(config=hyperparameter_defaults, project="your-project-name", entity="your-user")
+    
     save_info = {
         'checkpoint_path': '../results/',
         'checkpoint_save_str': '../results/transformer_groove_tap2drum-epoch-{}',
