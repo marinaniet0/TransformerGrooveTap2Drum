@@ -17,11 +17,13 @@ if __name__ == "__main__":
         learning_rate=1e-3,
         batch_size=64,
         dim_feedforward=1280,
-        epochs=100
+        epochs=100,
+        lr_scheduler_step_size=30,
+        lr_scheduler_gamma=0.1
     )
 
     wandb.init(config=hyperparameter_defaults, project="your-project-name", entity="your-user")
-
+    
     save_info = {
         'checkpoint_path': '../results/',
         'checkpoint_save_str': '../results/transformer_groove_tap2drum-epoch-{}',
@@ -59,7 +61,9 @@ if __name__ == "__main__":
     # TRAINING PARAMETERS
     training_parameters = {
         'learning_rate': wandb.config.learning_rate,
-        'batch_size': wandb.config.batch_size
+        'batch_size': wandb.config.batch_size,
+        'lr_scheduler_step_size': wandb.config.lr_scheduler_step_size,
+        'lr_scheduler_gamma': wandb.config.lr_scheduler_gamma
     }
 
     # PYTORCH LOSS FUNCTIONS
