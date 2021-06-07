@@ -5,6 +5,7 @@ import os
 import pickle
 import sys
 from tqdm import tqdm
+import wandb
 
 sys.path.append('../../hvo_sequence/')
 import numpy as np
@@ -75,6 +76,7 @@ class GrooveMidiDataset(Dataset):
         dev = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.inputs = torch.FloatTensor(self.inputs).to(dev)
         self.outputs = torch.FloatTensor(self.outputs).to(dev)
+        wandb.config.update({"set_length": len(self.sequences)})
         print('Dataset loaded\n')
 
     def __len__(self):
