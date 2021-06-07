@@ -5,12 +5,12 @@ metric:
 parameters:
   lr_scheduler_step_size:
     values:
-      10,
-      50
+    - 10
+    - 30
   lr_scheduler_gamma:
     values:
-      0.1,
-      0.01
+    - 0.1
+    - 0.01
   batch_size:
     values:
     - 64
@@ -31,6 +31,10 @@ parameters:
     - 0.1
     - 0.2
     - 0.3
+  optimizer_algorithm:
+    values:
+    - 'sgd'
+    - 'adam'
   learning_rate:
     values:
     - 0.001
@@ -52,5 +56,5 @@ parameters:
     - 2
     - 3
   epochs:
-    value: 100
+    value: 5
 program: train_tap2drum.py

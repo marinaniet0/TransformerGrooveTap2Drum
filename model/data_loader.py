@@ -4,6 +4,7 @@ import pandas as pd
 import os
 import pickle
 import sys
+from tqdm import tqdm
 
 sys.path.append('../../hvo_sequence/')
 import numpy as np
@@ -46,8 +47,8 @@ class GrooveMidiDataset(Dataset):
         self.sequences = []
 
         tapped_voice_idx = list(ROLAND_REDUCED_MAPPING.keys()).index(tappify_params["tapped_sequence_voice"])
-
-        for ix, hvo_seq in enumerate(subset):
+        print('Loading dataset...')
+        for ix, hvo_seq in enumerate(tqdm(subset)):
             if len(hvo_seq.time_signatures) == 1:
                 all_zeros = not np.any(hvo_seq.hvo.flatten())
                 if not all_zeros:
@@ -74,6 +75,7 @@ class GrooveMidiDataset(Dataset):
         dev = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.inputs = torch.FloatTensor(self.inputs).to(dev)
         self.outputs = torch.FloatTensor(self.outputs).to(dev)
+        print('Dataset loaded\n')
 
     def __len__(self):
         return len(self.sequences)
