@@ -1,10 +1,15 @@
 import sys
 import wandb
 import numpy as np
+import torch
+import os
 from data_loader import GrooveMidiDataset
 
-sys.path.append('../../BaseGrooveTransformers/models/')
-from train import *
+sys.path.insert(1, '../../BaseGrooveTransformers/')
+sys.path.insert(1, '../BaseGrooveTransformers/')
+from models.train import *
+
+os.environ['WANDB_MODE']='offline'
 
 if __name__ == "__main__":
 
