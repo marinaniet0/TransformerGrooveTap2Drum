@@ -1,6 +1,7 @@
 import sys
 import wandb
 import numpy as np
+import pandas as pd
 import torch
 from dataset import GrooveMidiDataset, process_dataset
 
@@ -12,8 +13,12 @@ sys.path.insert(1, '../../GrooveEvaluator/')
 sys.path.insert(1, '../GrooveEvaluator/')
 from GrooveEvaluator.evaluator import Evaluator
 
-import os
-os.environ['WANDB_MODE']='offline'
+sys.path.insert(1, '../../preprocessed_dataset/')
+sys.path.insert(1, '../preprocessed_dataset/')
+from Subset_Creators.subsetters import GrooveMidiSubsetter
+
+#import os
+#os.environ['WANDB_MODE']='offline'
 
 if __name__ == "__main__":
 
@@ -46,8 +51,8 @@ if __name__ == "__main__":
     }
 
     subset_info = {
-        "pickle_source_path": '../../preprocessed_dataset/datasets_extracted_locally/GrooveMidi/hvo_0.4.2'
-                              '/Processed_On_17_05_2021_at_22_32_hrs',
+        "pickle_source_path": '../../preprocessed_dataset/datasets_extracted_locally/GrooveMidi/hvo_0.4.4'
+                              '/Processed_On_09_06_2021_at_12_41_hrs',
         "subset": 'GrooveMIDI_processed_train',
         "metadata_csv_filename": 'metadata.csv',
         "hvo_pickle_filename": 'hvo_sequence_data.obj',
@@ -94,7 +99,7 @@ if __name__ == "__main__":
     _, subset_list = GrooveMidiSubsetter(pickle_source_path=subset_info["pickle_source_path"],
                                          subset=subset_info["subset"],
                                          hvo_pickle_filename=subset_info["hvo_pickle_filename"],
-                                         list_of_filter_dicts_for_subsets=filters).create_subsets()
+                                         list_of_filter_dicts_for_subsets=[filters]).create_subsets()
 
     gmd = GrooveMidiDataset(subset=subset_list[0], subset_info=subset_info, max_len=seq_max_len,
                             tappify_params=tap_params)
@@ -121,16 +126,10 @@ if __name__ == "__main__":
 
     model, optimizer, scheduler, ep = initialize_model(model_parameters, training_parameters, save_info, load_from_checkpoint=False)
     wandb.watch(model)
-    dataloader = load_dataset(GrooveMidiDataset, subset_info, filters, training_parameters['batch_size'])
 
     epoch_save_div = 1
     eps = wandb.config.epochs
-     # epochs -  Save model everytime anything is changed
-     #
-     # eval & generate everything
-     # eval & generate partially
-     # log every batch?
-     #
+
     # GENERATE FREQUENCY LOG ARRAYS
     first_epochs_step = 1
     first_epochs_lim = 10 if eps >= 10 else eps
@@ -146,10 +145,12 @@ if __name__ == "__main__":
     try:
         for i in np.arange(eps):
             ep += 1
+            save_model = (i in epoch_save_partial or i in epoch_save_all)
+
             print(f"Epoch {ep}\n-------------------------------")
             train_loop(dataloader=dataloader, groove_transformer=model, opt=optimizer, scheduler=scheduler, epoch=ep,
-                       loss_fn=calculate_loss, bce_fn=BCE_fn, mse_fn=MSE_fn, save_epoch=epoch_save_div, cp_info=save_info,
-                       device=model_parameters['device']) #, evaluator=evaluator)
+                       loss_fn=calculate_loss, bce_fn=BCE_fn, mse_fn=MSE_fn, save_model=save_model, cp_info=save_info,
+                       device=model_parameters['device'], wandb_run=wandb_run.name)
             print("-------------------------------\n")
 
             eval_pred = model.predict(eval_inputs, use_thres=True, thres=0.5)
@@ -157,11 +158,13 @@ if __name__ == "__main__":
             evaluator.add_predictions(eval_pred_hvo_array)
 
             if i in epoch_save_partial or i in epoch_save_all:
+
                 # Evaluate
                 acc_h = evaluator.get_hits_accuracies(drum_mapping=ROLAND_REDUCED_MAPPING)
                 mse_v = evaluator.get_velocity_errors(drum_mapping=ROLAND_REDUCED_MAPPING)
                 mse_o = evaluator.get_micro_timing_errors(drum_mapping=ROLAND_REDUCED_MAPPING)
                 rhythmic_distances = evaluator.get_rhythmic_distances()
+
                 # Log
                 wandb.log(acc_h, commit=False)
                 wandb.log(mse_v, commit=False)
@@ -169,6 +172,7 @@ if __name__ == "__main__":
                 wandb.log(rhythmic_distances, commit=False)
 
             if i in epoch_save_all:
+
                 # Heatmaps
                 heatmaps_global_features = evaluator.get_wandb_logging_media(
                     sf_paths=['../soundfonts/filtered_soundfonts/Standard_Drum_Kit.sf2'])

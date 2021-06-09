@@ -7,9 +7,11 @@ import sys
 from tqdm import tqdm
 import wandb
 
-sys.path.append('../../hvo_sequence/')
 import numpy as np
 
+
+sys.path.insert(1, '../../hvo_sequence/')
+sys.path.insert(1, '../hvo_sequence/')
 from hvo_sequence.hvo_seq import HVO_Sequence
 from hvo_sequence.drum_mappings import ROLAND_REDUCED_MAPPING
 
