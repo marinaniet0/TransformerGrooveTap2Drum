@@ -57,4 +57,4 @@ parameters:
     - 3
   epochs:
     value: 5
-program: train_tap2drum.py
+program: ./model/train_tap2drum.py
