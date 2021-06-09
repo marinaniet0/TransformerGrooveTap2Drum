@@ -19,6 +19,9 @@ from Subset_Creators.subsetters import GrooveMidiSubsetter
 
 #import os
 #os.environ['WANDB_MODE']='offline'
+sys.path.insert(1, '../../hvo_sequence/')
+sys.path.insert(1, '../hvo_sequence/')
+from hvo_sequence.drum_mappings import ROLAND_REDUCED_MAPPING
 
 if __name__ == "__main__":
 
@@ -149,12 +152,12 @@ if __name__ == "__main__":
 
             print(f"Epoch {ep}\n-------------------------------")
             train_loop(dataloader=dataloader, groove_transformer=model, opt=optimizer, scheduler=scheduler, epoch=ep,
-                       loss_fn=calculate_loss, bce_fn=BCE_fn, mse_fn=MSE_fn, save=save_model, cp_info=save_info,
-                       device=model_parameters['device'], wandb_run=wandb_run.name)
+                       loss_fn=calculate_loss, bce_fn=BCE_fn, mse_fn=MSE_fn, save=save_model,
+                       device=model_parameters['device'])
             print("-------------------------------\n")
 
-            eval_pred = model.predict(eval_inputs, use_thres=True, thres=0.5)
-            eval_pred_hvo_array = np.concatenate(eval_pred, axis=2)
+            eval_pred = torch.cat(model.predict(eval_inputs, use_thres=True, thres=0.5), dim=2)
+            eval_pred_hvo_array = eval_pred.cpu().detach().numpy()
             evaluator.add_predictions(eval_pred_hvo_array)
 
             if i in epoch_save_partial or i in epoch_save_all:
@@ -175,7 +178,7 @@ if __name__ == "__main__":
 
                 # Heatmaps
                 heatmaps_global_features = evaluator.get_wandb_logging_media(
-                    sf_paths=['../soundfonts/filtered_soundfonts/Standard_Drum_Kit.sf2'])
+                    sf_paths=['../../hvo_sequence/hvo_sequence/soundfonts/Standard_Drum_Kit.sf2'])
                 if len(heatmaps_global_features.keys()) > 0:
                     wandb.log(heatmaps_global_features, commit=False)
 

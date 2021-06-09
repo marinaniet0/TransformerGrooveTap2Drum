@@ -77,6 +77,12 @@ def process_dataset(subset, metadata, max_len, tappify_params):
                                               velocity_aggregator_modes=tappify_params["tapped_sequence_velocity_mode"])
                 inputs.append(flat_seq)
                 outputs.append(hvo_seq.hvo)
+
+    # Load data onto device
+    dev = 'cuda' if torch.cuda.is_available() else 'cpu'
+    inputs = torch.FloatTensor(inputs).to(dev)
+    outputs = torch.FloatTensor(outputs).to(dev)
+
     return inputs, outputs, hvo_sequences
 
 
@@ -135,11 +141,6 @@ class GrooveMidiDataset(Dataset):
 
         # Get processed inputs, outputs and hvo sequences
         self.inputs, self.outputs, self.sequences = process_dataset(subset, metadata, max_len, tappify_params)
-
-        # Load data onto device
-        dev = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.inputs = torch.FloatTensor(self.inputs).to(dev)
-        self.outputs = torch.FloatTensor(self.outputs).to(dev)
 
         # wandb.config.update({"set_length": len(self.sequences)})
         print('Dataset loaded\n')
