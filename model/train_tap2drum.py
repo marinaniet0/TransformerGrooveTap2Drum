@@ -149,7 +149,7 @@ if __name__ == "__main__":
 
             print(f"Epoch {ep}\n-------------------------------")
             train_loop(dataloader=dataloader, groove_transformer=model, opt=optimizer, scheduler=scheduler, epoch=ep,
-                       loss_fn=calculate_loss, bce_fn=BCE_fn, mse_fn=MSE_fn, save_model=save_model, cp_info=save_info,
+                       loss_fn=calculate_loss, bce_fn=BCE_fn, mse_fn=MSE_fn, save=save_model, cp_info=save_info,
                        device=model_parameters['device'], wandb_run=wandb_run.name)
             print("-------------------------------\n")
 
