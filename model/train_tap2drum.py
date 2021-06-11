@@ -36,7 +36,7 @@ if __name__ == "__main__":
         learning_rate=1e-3,
         batch_size=64,
         dim_feedforward=1280,
-        epochs=1,
+        epochs=500,
         lr_scheduler_step_size=30,
         lr_scheduler_gamma=0.1
     )
