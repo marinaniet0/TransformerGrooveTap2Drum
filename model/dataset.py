@@ -85,8 +85,7 @@ def process_dataset(subset, metadata, max_len, tappify_params):
 
     return inputs, outputs, hvo_sequences
 
-
-class GrooveMidiDataset(Dataset):
+class GrooveMidiDatasetTap2Drum(Dataset):
     """
     Class that loads and processes the GrooveMidiDataset for the task of Tap2Drum
 

@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import torch
 from torch.utils.data import DataLoader
-from dataset import GrooveMidiDataset, process_dataset
+from dataset import GrooveMidiDatasetTap2Drum, process_dataset
 
 sys.path.insert(1, "../../BaseGrooveTransformers/")
 sys.path.insert(1, "../BaseGrooveTransformers/")
@@ -31,8 +31,7 @@ if __name__ == "__main__":
         d_model=128,
         n_heads=8,
         dropout=0.1,
-        num_encoder_layers=1,
-        num_decoder_layers=1,
+        num_encoder_decoder_layers=1,
         learning_rate=1e-3,
         batch_size=64,
         dim_feedforward=1280,
@@ -50,8 +49,8 @@ if __name__ == "__main__":
             "n_heads": wandb.config.n_heads,
             "dim_feedforward": wandb.config.dim_feedforward,
             "dropout": wandb.config.dropout,
-            "num_encoder_layers": wandb.config.num_encoder_layers,
-            "num_decoder_layers": wandb.config.num_decoder_layers,
+            "num_encoder_layers": wandb.config.num_encoder_decoder_layers,
+            "num_decoder_layers": wandb.config.num_encoder_decoder_layers,
             "max_len": 32,
             "embedding_size_src": 27,
             "embedding_size_tgt": 27,
@@ -109,8 +108,8 @@ if __name__ == "__main__":
                                          hvo_pickle_filename=params["dataset"]["hvo_pickle_filename"],
                                          list_of_filter_dicts_for_subsets=[params["dataset"]["filters"]]).create_subsets()
 
-    gmd = GrooveMidiDataset(subset=subset_list[0], subset_info=params["dataset"],
-                            tappify_params=params["tappify_params"], max_len=params["dataset"]["max_len"])
+    gmd = GrooveMidiDatasetTap2Drum(subset=subset_list[0], subset_info=params["dataset"],
+                                    tappify_params=params["tappify_params"], max_len=params["dataset"]["max_len"])
 
     dataloader = DataLoader(gmd, batch_size=params["training"]["batch_size"], shuffle=True)
 
@@ -170,7 +169,7 @@ if __name__ == "__main__":
             eval_pred = torch.cat(model.predict(eval_inputs, use_thres=True, thres=0.5), dim=2)
             eval_pred_hvo_array = eval_pred.cpu().detach().numpy()
             evaluator.add_predictions(eval_pred_hvo_array)
-
+            evaluator.identifier='Test_Epoch_{}'.format(ep)
             if i in epoch_save_partial or i in epoch_save_all:
 
                 # Evaluate
