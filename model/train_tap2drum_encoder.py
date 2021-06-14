@@ -96,8 +96,8 @@ if __name__ == "__main__":
     }
 
     # PYTORCH LOSS FUNCTIONS
-    BCE_fn = torch.nn.BCEWithLogitsLoss()
-    MSE_fn = torch.nn.MSELoss()
+    BCE_fn = torch.nn.BCEWithLogitsLoss(reduction='none')
+    MSE_fn = torch.nn.MSELoss(reduction='none')
 
     model, optimizer, scheduler, ep = initialize_model(params)
     wandb.watch(model)
