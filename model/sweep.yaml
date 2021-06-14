@@ -37,4 +37,4 @@ parameters:
     max: 8
   epochs:
     value: 100
-program: train_tap2drum.py
+program: train_tap2drum_encoder.py

@@ -17,4 +17,5 @@ source activate torch_thesis
 cd /homedtic/mnieto/project/TransformerGrooveTap2Drum/model/
 export WANDB_API_KEY=""
 python -m wandb login
-python train_tap2drum.py
+wandb agent marinaniet0/test_sweep_t2d/qyp15cdc
+#python train_tap2drum.py
