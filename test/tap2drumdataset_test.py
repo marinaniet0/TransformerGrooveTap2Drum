@@ -16,7 +16,7 @@ params = {
             "hvo_pickle_filename": "hvo_sequence_data.obj",
             "filters": {
                 "beat_type": ["beat"],
-                "time_signature": ["4-4"],
+                "time_signature": ["4-4"]
                 # "master_id": ["drummer9/session1/8"]
             },
             "max_len": 32
@@ -52,3 +52,4 @@ class Test_Tap2DrumDataset(unittest.TestCase):
         for (input, output, idx) in Test_Tap2DrumDataset.gmd:
             self.assertGreater(torch.count_nonzero(input), 0)
             self.assertGreater(torch.count_nonzero(output), 0)
+
