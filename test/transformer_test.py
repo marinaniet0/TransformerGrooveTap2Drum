@@ -40,8 +40,8 @@ params = {
         "filters": {
             "beat_type": ["beat"],
             "time_signature": ["4-4"],
-            # "master_id": ["drummer1/session1/201"]  # 29 examples
-            "master_id": ["drummer9/session1/8"]  # 4 examples
+            "master_id": ["drummer1/session1/201"]  # 29 examples
+            # "master_id": ["drummer9/session1/8"]  # 4 examples
         },
         "max_len": 32
     },
@@ -87,7 +87,6 @@ class Test_Transformer(unittest.TestCase):
         """
         model = Test_Transformer.model
         opt = Test_Transformer.optimizer
-        scheduler = Test_Transformer.scheduler
         ep = Test_Transformer.ep + 1
 
         model_params = [np for np in model.named_parameters() if np[1].requires_grad]
@@ -95,8 +94,8 @@ class Test_Transformer(unittest.TestCase):
         # make a copy of initial params
         initial_params = [(name, p.clone()) for (name, p) in model_params]
 
-        train_loop(dataloader=Test_Transformer.dataloader, groove_transformer=model, opt=opt, scheduler=scheduler,
-                   epoch=ep, loss_fn=calculate_loss, bce_fn=Test_Transformer.BCE_fn, mse_fn=Test_Transformer.MSE_fn,
+        train_loop(dataloader=Test_Transformer.dataloader, groove_transformer=model, opt=opt, epoch=ep,
+                   loss_fn=calculate_loss, bce_fn=Test_Transformer.BCE_fn, mse_fn=Test_Transformer.MSE_fn,
                    save=False, device=params["model"]["device"], encoder_only=params["model"]["encoder_only"])
 
         for (_, p0), (name, p1) in zip(initial_params, model_params):
@@ -108,22 +107,22 @@ class Test_Transformer(unittest.TestCase):
 
     def test_parameters_const_loss(self):
         """
-        Test if after running 500 epochs, loss is not changing (dropout=0) & if the parameters are the same from the
-        first epoch where the loss is the same to the previous epoch
+        Test if after running X epochs or loss is exactly the same (dropout=0), the parameters are the same from one
+        epoch to the previous
         """
         named_params = [np for np in Test_Transformer.model.named_parameters() if np[1].requires_grad]
         # print(sum(p.numel() for p in Test_Transformer.model.parameters() if p.requires_grad))  # number of parameters
-        # copy initial parameters
+        # copy params
         prev_params, last_params = [(name, p.clone()) for (name, p) in named_params], []
 
         model = Test_Transformer.model
         opt = Test_Transformer.optimizer
-        # scheduler = Test_Transformer.scheduler
         ep = Test_Transformer.ep
 
         prev_loss, loss = -1, -2
         max_ep =2000
 
+        # Run for max_ep maximum or until loss is same as previous step
         while (prev_loss != loss and ep < max_ep):
             ep += 1
             print("Epoch {} -------------------------------\n".format(ep))
