@@ -35,9 +35,7 @@ if __name__ == "__main__":
         learning_rate=1e-3,
         batch_size=64,
         dim_feedforward=512,  # multiple of d_model
-        epochs=10,
-        lr_scheduler_step_size=30,
-        lr_scheduler_gamma=0.1
+        epochs=10
     )
 
     wandb_run = wandb.init(config=hyperparameter_defaults, project="tap2drum")
@@ -59,9 +57,7 @@ if __name__ == "__main__":
         },
         "training": {
             "learning_rate": wandb.config.learning_rate,
-            "batch_size": wandb.config.batch_size,
-            "lr_scheduler_step_size": wandb.config.lr_scheduler_step_size,
-            "lr_scheduler_gamma": wandb.config.lr_scheduler_gamma
+            "batch_size": wandb.config.batch_size
         },
         "dataset": {
             "pickle_source_path": "../../preprocessed_dataset/datasets_extracted_locally/GrooveMidi/hvo_0.4.4"
@@ -100,7 +96,7 @@ if __name__ == "__main__":
     BCE_fn = torch.nn.BCEWithLogitsLoss(reduction='none')
     MSE_fn = torch.nn.MSELoss(reduction='none')
 
-    model, optimizer, scheduler, ep = initialize_model(params)
+    model, optimizer, ep = initialize_model(params)
     wandb.watch(model)
 
     # DATASET LOADING FOR TRAINING
@@ -162,9 +158,9 @@ if __name__ == "__main__":
             save_model = (i in epoch_save_partial or i in epoch_save_all)
 
             print(f"Epoch {ep}\n-------------------------------")
-            train_loop(dataloader=dataloader, groove_transformer=model, opt=optimizer, scheduler=scheduler, epoch=ep,
-                       loss_fn=calculate_loss, bce_fn=BCE_fn, mse_fn=MSE_fn, save=save_model,
-                       device=params["model"]["device"], encoder_only=params["model"]["encoder_only"])
+            train_loop(dataloader=dataloader, groove_transformer=model, opt=optimizer, epoch=ep, loss_fn=calculate_loss,
+                       bce_fn=BCE_fn, mse_fn=MSE_fn, save=save_model, device=params["model"]["device"],
+                       encoder_only=params["model"]["encoder_only"])
             print("-------------------------------\n")
 
             eval_pred = torch.cat(model.predict(eval_inputs, use_thres=True, thres=0.5), dim=2)
