@@ -125,8 +125,8 @@ if __name__ == "__main__":
         hvo_pickle_filename=params["dataset"]["hvo_pickle_filename"],
         list_of_filter_dicts_for_subsets=list_of_filter_dicts_for_subsets,
         max_hvo_shape=(32, 27),
-        n_samples_to_use=1024,
-        n_samples_to_synthesize_visualize_per_subset=10,
+        n_samples_to_use=128,
+        n_samples_to_synthesize_visualize_per_subset=4,
         disable_tqdm=False,
         analyze_heatmap=True,
         analyze_global_features=True
