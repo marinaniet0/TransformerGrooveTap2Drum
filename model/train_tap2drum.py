@@ -34,8 +34,8 @@ if __name__ == "__main__":
         num_encoder_decoder_layers=1,
         learning_rate=1e-3,
         batch_size=64,
-        dim_feedforward=1280,
-        epochs=500,
+        dim_feedforward=512,  # multiple of d_model
+        epochs=10,
         lr_scheduler_step_size=30,
         lr_scheduler_gamma=0.1
     )
@@ -54,6 +54,7 @@ if __name__ == "__main__":
             "max_len": 32,
             "embedding_size_src": 27,
             "embedding_size_tgt": 27,
+            "encoder_only": True, # Set to false for encoder-decoder
             "device": "cuda" if torch.cuda.is_available() else "cpu"
         },
         "training": {
@@ -96,8 +97,8 @@ if __name__ == "__main__":
     }
 
     # PYTORCH LOSS FUNCTIONS
-    BCE_fn = torch.nn.BCEWithLogitsLoss()
-    MSE_fn = torch.nn.MSELoss()
+    BCE_fn = torch.nn.BCEWithLogitsLoss(reduction='none')
+    MSE_fn = torch.nn.MSELoss(reduction='none')
 
     model, optimizer, scheduler, ep = initialize_model(params)
     wandb.watch(model)
@@ -163,7 +164,7 @@ if __name__ == "__main__":
             print(f"Epoch {ep}\n-------------------------------")
             train_loop(dataloader=dataloader, groove_transformer=model, opt=optimizer, scheduler=scheduler, epoch=ep,
                        loss_fn=calculate_loss, bce_fn=BCE_fn, mse_fn=MSE_fn, save=save_model,
-                       device=params["model"]["device"])
+                       device=params["model"]["device"], encoder_only=params["model"]["encoder_only"])
             print("-------------------------------\n")
 
             eval_pred = torch.cat(model.predict(eval_inputs, use_thres=True, thres=0.5), dim=2)
