@@ -60,8 +60,8 @@ if __name__ == "__main__":
             "batch_size": wandb.config.batch_size
         },
         "dataset": {
-            "pickle_source_path": "../../preprocessed_dataset/datasets_extracted_locally/GrooveMidi/hvo_0.4.4"
-                                  "/Processed_On_09_06_2021_at_12_41_hrs",
+            "pickle_source_path": "../../preprocessed_dataset/datasets_extracted_locally/GrooveMidi/hvo_0.4.5"
+                                  "/Processed_On_14_06_2021_at_14_26_hrs",
             "subset": "GrooveMIDI_processed_train",
             "metadata_csv_filename": "metadata.csv",
             "hvo_pickle_filename": "hvo_sequence_data.obj",
@@ -141,12 +141,12 @@ if __name__ == "__main__":
     eps = wandb.config.epochs
 
     # GENERATE FREQUENCY LOG ARRAYS
-    first_epochs_step = 1
+    first_epochs_step = 2
     first_epochs_lim = 10 if eps >= 10 else eps
     epoch_save_partial = np.arange(first_epochs_lim, step=first_epochs_step)
     epoch_save_all = np.arange(first_epochs_lim, step=first_epochs_step)
     if first_epochs_lim != eps:
-        remaining_epochs_step_partial, remaining_epochs_step_all = 5, 10
+        remaining_epochs_step_partial, remaining_epochs_step_all = 10, 10
         epoch_save_partial = np.append(epoch_save_partial,
                                        np.arange(start=first_epochs_lim, step=remaining_epochs_step_partial, stop=eps))
         epoch_save_all = np.append(epoch_save_all,
