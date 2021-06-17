@@ -5,6 +5,7 @@ import pandas as pd
 import torch
 from torch.utils.data import DataLoader
 from dataset import GrooveMidiDatasetTap2Drum, process_dataset
+from utils import eval_log_freq
 
 sys.path.insert(1, "../../BaseGrooveTransformers/")
 sys.path.insert(1, "../BaseGrooveTransformers/")
@@ -77,7 +78,7 @@ if __name__ == "__main__":
             "tapped_sequence_velocity_mode": 1,
             "tapped_sequence_offset_mode": 3
         },
-        "load_model": None  # if we don't want to load any model, set to None
+        "load_model": None,  # if we don't want to load any model, set to None
         #"load_model": {
         #    "location": "local",
         #    "dir": "./wandb/run-20210609_162149-1tsi1g1n/files/saved_models/",
@@ -90,6 +91,7 @@ if __name__ == "__main__":
         #    "epoch": 51,
         #    "run": "1tsi1g1n"
         #}
+        "evaluator_on": True
     }
 
     # PYTORCH LOSS FUNCTIONS
@@ -110,47 +112,44 @@ if __name__ == "__main__":
 
     dataloader = DataLoader(gmd, batch_size=params["training"]["batch_size"], shuffle=True)
 
-    # EVALUATOR
-    styles = ["hiphop", "funk", "reggae", "soul", "latin", "jazz", "pop", "afrobeat", "highlife", "punk", "rock"]
-
-    list_of_filter_dicts_for_subsets = []
-    for style in styles:
-        list_of_filter_dicts_for_subsets.append(
-           {"style_primary": [style], "beat_type": ["beat"], "time_signature": ["4-4"]}
-        )
-
-    evaluator = Evaluator(
-        pickle_source_path=params["dataset"]["pickle_source_path"],
-        set_subfolder=params["dataset"]["subset"],
-        hvo_pickle_filename=params["dataset"]["hvo_pickle_filename"],
-        list_of_filter_dicts_for_subsets=list_of_filter_dicts_for_subsets,
-        max_hvo_shape=(32, 27),
-        n_samples_to_use=128,
-        n_samples_to_synthesize_visualize_per_subset=4,
-        disable_tqdm=False,
-        analyze_heatmap=True,
-        analyze_global_features=True
-    )
-    evaluator_subset = evaluator.get_ground_truth_hvo_sequences()
-    metadata = pd.read_csv(os.path.join(params["dataset"]["pickle_source_path"], params["dataset"]["subset"],
-                                            params["dataset"]["metadata_csv_filename"]))
-    eval_inputs, _, _ = process_dataset(evaluator_subset, metadata=metadata, max_len=params["dataset"]["max_len"],
-                                                               tappify_params=params["tappify_params"])
-
-    epoch_save_div = 2
+    # Get number of epochs from wandb config
     eps = wandb.config.epochs
 
+    if params["evaluator_on"]:
+
+        styles = ["hiphop", "funk", "reggae", "soul", "latin", "jazz", "pop", "afrobeat", "highlife", "punk", "rock"]
+
+        list_of_filter_dicts_for_subsets = []
+        for style in styles:
+            list_of_filter_dicts_for_subsets.append(
+               {"style_primary": [style], "beat_type": ["beat"], "time_signature": ["4-4"]}
+            )
+
+        evaluator = Evaluator(
+            pickle_source_path=params["dataset"]["pickle_source_path"],
+            set_subfolder=params["dataset"]["subset"],
+            hvo_pickle_filename=params["dataset"]["hvo_pickle_filename"],
+            list_of_filter_dicts_for_subsets=list_of_filter_dicts_for_subsets,
+            max_hvo_shape=(32, 27),
+            n_samples_to_use=2048,
+            n_samples_to_synthesize_visualize_per_subset=10,
+            disable_tqdm=False,
+            analyze_heatmap=True,
+            analyze_global_features=True
+        )
+        evaluator_subset = evaluator.get_ground_truth_hvo_sequences()
+        metadata = pd.read_csv(os.path.join(params["dataset"]["pickle_source_path"], params["dataset"]["subset"],
+                                                params["dataset"]["metadata_csv_filename"]))
+        eval_inputs, _, _ = process_dataset(evaluator_subset, metadata=metadata, max_len=params["dataset"]["max_len"],
+                                                                   tappify_params=params["tappify_params"])
+
     # GENERATE FREQUENCY LOG ARRAYS
-    first_epochs_step = 2
-    first_epochs_lim = 10 if eps >= 10 else eps
-    epoch_save_partial = np.arange(first_epochs_lim, step=first_epochs_step)
-    epoch_save_all = np.arange(first_epochs_lim, step=first_epochs_step)
-    if first_epochs_lim != eps:
-        remaining_epochs_step_partial, remaining_epochs_step_all = 10, 10
-        epoch_save_partial = np.append(epoch_save_partial,
-                                       np.arange(start=first_epochs_lim, step=remaining_epochs_step_partial, stop=eps))
-        epoch_save_all = np.append(epoch_save_all,
-                                   np.arange(start=first_epochs_lim, step=remaining_epochs_step_all, stop=eps))
+    # epoch_save_partial, epoch_save_all = eval_log_freq(total_epochs=eps, initial_epochs_lim=10, initial_step_partial=2,
+    #                                                    initial_step_all=2, secondary_step_partial=5,
+    #                                                    secondary_step_all=10)
+
+    # ONLY EVAL ON LAST EPOCH
+    epoch_save_partial, epoch_save_all = [eps-1], [eps-1]
 
     try:
         for i in np.arange(eps):
@@ -163,33 +162,36 @@ if __name__ == "__main__":
                        encoder_only=params["model"]["encoder_only"])
             print("-------------------------------\n")
 
-            eval_pred = torch.cat(model.predict(eval_inputs, use_thres=True, thres=0.5), dim=2)
-            eval_pred_hvo_array = eval_pred.cpu().detach().numpy()
-            evaluator.add_predictions(eval_pred_hvo_array)
-            evaluator.identifier='Test_Epoch_{}'.format(ep)
-            if i in epoch_save_partial or i in epoch_save_all:
+            if params["evaluator_on"]:
 
-                # Evaluate
-                acc_h = evaluator.get_hits_accuracies(drum_mapping=ROLAND_REDUCED_MAPPING)
-                mse_v = evaluator.get_velocity_errors(drum_mapping=ROLAND_REDUCED_MAPPING)
-                mse_o = evaluator.get_micro_timing_errors(drum_mapping=ROLAND_REDUCED_MAPPING)
-                rhythmic_distances = evaluator.get_rhythmic_distances()
+                if i in epoch_save_partial or i in epoch_save_all:
 
-                # Log
-                wandb.log(acc_h, commit=False)
-                wandb.log(mse_v, commit=False)
-                wandb.log(mse_o, commit=False)
-                wandb.log(rhythmic_distances, commit=False)
+                    eval_pred = torch.cat(model.predict(eval_inputs, use_thres=True, thres=0.5), dim=2)
+                    eval_pred_hvo_array = eval_pred.cpu().detach().numpy()
+                    evaluator.add_predictions(eval_pred_hvo_array)
+                    evaluator.identifier = 'Test_Epoch_{}'.format(ep)
 
-            if i in epoch_save_all:
+                    # Evaluate
+                    acc_h = evaluator.get_hits_accuracies(drum_mapping=ROLAND_REDUCED_MAPPING)
+                    mse_v = evaluator.get_velocity_errors(drum_mapping=ROLAND_REDUCED_MAPPING)
+                    mse_o = evaluator.get_micro_timing_errors(drum_mapping=ROLAND_REDUCED_MAPPING)
+                    rhythmic_distances = evaluator.get_rhythmic_distances()
 
-                # Heatmaps
-                heatmaps_global_features = evaluator.get_wandb_logging_media(
-                    sf_paths=["../../hvo_sequence/hvo_sequence/soundfonts/Standard_Drum_Kit.sf2"])
-                if len(heatmaps_global_features.keys()) > 0:
-                    wandb.log(heatmaps_global_features, commit=False)
+                    # Log
+                    wandb.log(acc_h, commit=False)
+                    wandb.log(mse_v, commit=False)
+                    wandb.log(mse_o, commit=False)
+                    wandb.log(rhythmic_distances, commit=False)
 
-            evaluator.dump(path="misc/evaluator_run_{}_Epoch_{}.Eval".format(wandb_run.name, ep))
+                    if i in epoch_save_all:
+                        # Heatmaps
+                        heatmaps_global_features = evaluator.get_wandb_logging_media(
+                            sf_paths=["../../hvo_sequence/hvo_sequence/soundfonts/Standard_Drum_Kit.sf2"])
+                        if len(heatmaps_global_features.keys()) > 0:
+                            wandb.log(heatmaps_global_features, commit=False)
+
+                    evaluator.dump(path="misc/evaluator_run_{}_Epoch_{}.Eval".format(wandb_run.name, ep))
+
             wandb.log({"epoch": ep})
 
     finally:
