@@ -23,10 +23,10 @@ parameters:
     max: 0.1
   n_heads:
     values: [ 1, 2, 4, 8, 16]
-  num_encoder_decoder_layers:
+  num_encoder_decoder_layers: # changed from 1-8 to 6-12
     distribution: 'int_uniform'
-    min: 1
-    max: 8
+    min: 6
+    max: 12
   epochs:
     value: 100
 program: train_tap2drum.py
