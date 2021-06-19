@@ -175,7 +175,7 @@ if __name__ == "__main__":
         metadata_test = pd.read_csv(os.path.join(params["test_dataset"]["pickle_source_path"],
                                                  params["test_dataset"]["subset"],
                                                  params["test_dataset"]["metadata_csv_filename"]))
-        test_eval_inputs, _, _ = process_dataset(train_evaluator_subset, metadata=metadata_test,
+        test_eval_inputs, _, _ = process_dataset(test_evaluator_subset, metadata=metadata_test,
                                                   max_len=params["test_dataset"]["max_len"],
                                                   tappify_params=params["tappify_params"])
 
