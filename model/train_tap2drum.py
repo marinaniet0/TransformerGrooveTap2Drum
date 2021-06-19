@@ -206,49 +206,57 @@ if __name__ == "__main__":
                 if i in epoch_save_partial or i in epoch_save_all:
 
                     # EVAL TRAIN
-
+                    # --------------------------------------------------------------------------------------------------
                     train_evaluator._identifier = 'Train_Set_Epoch_{}'.format(ep)
                     train_eval_pred = torch.cat(model.predict(train_eval_inputs, use_thres=True, thres=0.5), dim=2)
                     train_eval_pred_hvo_array = train_eval_pred.cpu().detach().numpy()
                     train_evaluator.add_predictions(train_eval_pred_hvo_array)
 
                     # Evaluate
-                    acc_h = train_evaluator.get_hits_accuracies(drum_mapping=ROLAND_REDUCED_MAPPING)
-                    mse_v = train_evaluator.get_velocity_errors(drum_mapping=ROLAND_REDUCED_MAPPING)
-                    mse_o = train_evaluator.get_micro_timing_errors(drum_mapping=ROLAND_REDUCED_MAPPING)
-                    # rhythmic_distances = train_evaluator.get_rhythmic_distances()
+                    train_acc_h = train_evaluator.get_hits_accuracies(drum_mapping=ROLAND_REDUCED_MAPPING)
+                    train_mse_v = train_evaluator.get_velocity_errors(drum_mapping=ROLAND_REDUCED_MAPPING)
+                    train_mse_o = train_evaluator.get_micro_timing_errors(drum_mapping=ROLAND_REDUCED_MAPPING)
+                    # train_rhythmic_distances = train_evaluator.get_rhythmic_distances()
 
                     # Log
-                    wandb.log(acc_h, commit=False)
-                    wandb.log(mse_v, commit=False)
-                    wandb.log(mse_o, commit=False)
-                    # wandb.log(rhythmic_distances, commit=False)
+                    wandb.log(train_acc_h, commit=False)
+                    wandb.log(train_mse_v, commit=False)
+                    wandb.log(train_mse_o, commit=False)
+                    # wandb.log(train_rhythmic_distances, commit=False)
+
+                    if i in epoch_save_all:
+
+                        # Heatmaps train
+                        train_heatmaps_global_features = train_evaluator.get_wandb_logging_media(
+                            sf_paths=["../../hvo_sequence/hvo_sequence/soundfonts/Standard_Drum_Kit.sf2"])
+                        if len(train_heatmaps_global_features.keys()) > 0:
+                            wandb.log(train_heatmaps_global_features, commit=False)
+
+                    train_evaluator.dump(path="misc/train_set_evaluator_run_{}_Epoch_{}.Eval".format(wandb_run.name, ep))
+                    #---------------------------------------------------------------------------------------------------
+                    wandb.log({"epoch": ep})
+
 
                     # EVAL TEST
-
+                    #---------------------------------------------------------------------------------------------------
                     test_evaluator._identifier = 'Test_Set_Epoch_{}'.format(ep)
                     test_eval_pred = torch.cat(model.predict(test_eval_inputs, use_thres=True, thres=0.5), dim=2)
                     test_eval_pred_hvo_array = test_eval_pred.cpu().detach().numpy()
                     test_evaluator.add_predictions(test_eval_pred_hvo_array)
 
                     # Evaluate
-                    acc_h = test_evaluator.get_hits_accuracies(drum_mapping=ROLAND_REDUCED_MAPPING)
-                    mse_v = test_evaluator.get_velocity_errors(drum_mapping=ROLAND_REDUCED_MAPPING)
-                    mse_o = test_evaluator.get_micro_timing_errors(drum_mapping=ROLAND_REDUCED_MAPPING)
+                    test_acc_h = test_evaluator.get_hits_accuracies(drum_mapping=ROLAND_REDUCED_MAPPING)
+                    test_mse_v = test_evaluator.get_velocity_errors(drum_mapping=ROLAND_REDUCED_MAPPING)
+                    test_mse_o = test_evaluator.get_micro_timing_errors(drum_mapping=ROLAND_REDUCED_MAPPING)
                     # rhythmic_distances = test_evaluator.get_rhythmic_distances()
 
                     # Log
-                    wandb.log(acc_h, commit=False)
-                    wandb.log(mse_v, commit=False)
-                    wandb.log(mse_o, commit=False)
+                    wandb.log(test_acc_h, commit=False)
+                    wandb.log(test_mse_v, commit=False)
+                    wandb.log(test_mse_o, commit=False)
                     # wandb.log(rhythmic_distances, commit=False)
 
                     if i in epoch_save_all:
-                        # Heatmaps train
-                        train_heatmaps_global_features = train_evaluator.get_wandb_logging_media(
-                            sf_paths=["../../hvo_sequence/hvo_sequence/soundfonts/Standard_Drum_Kit.sf2"])
-                        if len(train_heatmaps_global_features.keys()) > 0:
-                            wandb.log(train_heatmaps_global_features, commit=False)
 
                         # Heatmaps test
                         test_heatmaps_global_features = test_evaluator.get_wandb_logging_media(
@@ -256,10 +264,9 @@ if __name__ == "__main__":
                         if len(test_heatmaps_global_features.keys()) > 0:
                             wandb.log(test_heatmaps_global_features, commit=False)
 
-                    train_evaluator.dump(path="misc/train_set_evaluator_run_{}_Epoch_{}.Eval".format(wandb_run.name, ep))
                     test_evaluator.dump(path="misc/test_set_evaluator_run_{}_Epoch_{}.Eval".format(wandb_run.name, ep))
-
-            wandb.log({"epoch": ep})
+                    #---------------------------------------------------------------------------------------------------
+                    wandb.log({"epoch": ep})
 
     finally:
         wandb.finish()
