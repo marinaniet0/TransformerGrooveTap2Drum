@@ -148,7 +148,8 @@ if __name__ == "__main__":
             n_samples_to_synthesize_visualize_per_subset=10,
             disable_tqdm=False,
             analyze_heatmap=True,
-            analyze_global_features=True
+            analyze_global_features=True,
+            _identifier="Train_Set"
         )
         train_evaluator_subset = train_evaluator.get_ground_truth_hvo_sequences()
         metadata_train = pd.read_csv(os.path.join(params["train_dataset"]["pickle_source_path"],
@@ -169,7 +170,8 @@ if __name__ == "__main__":
             n_samples_to_synthesize_visualize_per_subset=10,
             disable_tqdm=False,
             analyze_heatmap=True,
-            analyze_global_features=True
+            analyze_global_features=True,
+            _identifier="Test_Set"
         )
         test_evaluator_subset = test_evaluator.get_ground_truth_hvo_sequences()
         metadata_test = pd.read_csv(os.path.join(params["test_dataset"]["pickle_source_path"],
@@ -205,10 +207,10 @@ if __name__ == "__main__":
 
                     # EVAL TRAIN
 
+                    train_evaluator._identifier = 'Train_Set_Epoch_{}'.format(ep)
                     train_eval_pred = torch.cat(model.predict(train_eval_inputs, use_thres=True, thres=0.5), dim=2)
                     train_eval_pred_hvo_array = train_eval_pred.cpu().detach().numpy()
                     train_evaluator.add_predictions(train_eval_pred_hvo_array)
-                    train_evaluator.identifier = 'Train_Epoch_{}'.format(ep)
 
                     # Evaluate
                     acc_h = train_evaluator.get_hits_accuracies(drum_mapping=ROLAND_REDUCED_MAPPING)
@@ -224,10 +226,10 @@ if __name__ == "__main__":
 
                     # EVAL TEST
 
+                    test_evaluator._identifier = 'Test_Set_Epoch_{}'.format(ep)
                     test_eval_pred = torch.cat(model.predict(test_eval_inputs, use_thres=True, thres=0.5), dim=2)
                     test_eval_pred_hvo_array = test_eval_pred.cpu().detach().numpy()
                     test_evaluator.add_predictions(test_eval_pred_hvo_array)
-                    test_evaluator.identifier = 'Test_Epoch_{}'.format(ep)
 
                     # Evaluate
                     acc_h = test_evaluator.get_hits_accuracies(drum_mapping=ROLAND_REDUCED_MAPPING)
@@ -243,16 +245,16 @@ if __name__ == "__main__":
 
                     if i in epoch_save_all:
                         # Heatmaps train
-                        heatmaps_global_features = train_evaluator.get_wandb_logging_media(
+                        train_heatmaps_global_features = train_evaluator.get_wandb_logging_media(
                             sf_paths=["../../hvo_sequence/hvo_sequence/soundfonts/Standard_Drum_Kit.sf2"])
-                        if len(heatmaps_global_features.keys()) > 0:
-                            wandb.log(heatmaps_global_features, commit=False)
+                        if len(train_heatmaps_global_features.keys()) > 0:
+                            wandb.log(train_heatmaps_global_features, commit=False)
 
                         # Heatmaps test
-                        heatmaps_global_features = test_evaluator.get_wandb_logging_media(
+                        test_heatmaps_global_features = test_evaluator.get_wandb_logging_media(
                             sf_paths=["../../hvo_sequence/hvo_sequence/soundfonts/Standard_Drum_Kit.sf2"])
-                        if len(heatmaps_global_features.keys()) > 0:
-                            wandb.log(heatmaps_global_features, commit=False)
+                        if len(test_heatmaps_global_features.keys()) > 0:
+                            wandb.log(test_heatmaps_global_features, commit=False)
 
                     train_evaluator.dump(path="misc/train_set_evaluator_run_{}_Epoch_{}.Eval".format(wandb_run.name, ep))
                     test_evaluator.dump(path="misc/test_set_evaluator_run_{}_Epoch_{}.Eval".format(wandb_run.name, ep))
