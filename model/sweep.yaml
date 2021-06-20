@@ -27,6 +27,10 @@ parameters:
     distribution: 'int_uniform'
     min: 6
     max: 12
+  train_eval:
+    value: 1 # not sure about booleans in yaml, so using 0 (False) & 1 (True)
+  test_eval:
+    value: 1
   epochs:
     value: 100
 program: train_tap2drum.py

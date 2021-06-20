@@ -36,7 +36,9 @@ if __name__ == "__main__":
         learning_rate=1e-3,
         batch_size=64,
         dim_feedforward=512,  # multiple of d_model
-        epochs=10
+        epochs=1,
+        train_eval=0,
+        test_eval=0
     )
 
     wandb_run = wandb.init(config=hyperparameter_defaults, project="tap2drum")
@@ -103,7 +105,8 @@ if __name__ == "__main__":
         #    "epoch": 51,
         #    "run": "1tsi1g1n"
         #}
-        "evaluator_on": True
+        "train_eval": wandb.config.train_eval,
+        "test_eval": wandb.config.test_eval
     }
 
     # PYTORCH LOSS FUNCTIONS
@@ -127,7 +130,7 @@ if __name__ == "__main__":
     # Get number of epochs from wandb config
     eps = wandb.config.epochs
 
-    if params["evaluator_on"]:
+    if params["train_eval"] or params["test_eval"]:
 
         styles = ["hiphop", "funk", "reggae", "soul", "latin", "jazz", "pop", "afrobeat", "highlife", "punk", "rock"]
 
@@ -137,49 +140,53 @@ if __name__ == "__main__":
                {"style_primary": [style], "beat_type": ["beat"], "time_signature": ["4-4"]}
             )
 
-        # TRAIN EVALUATOR
-        train_evaluator = Evaluator(
-            pickle_source_path=params["train_dataset"]["pickle_source_path"],
-            set_subfolder=params["train_dataset"]["subset"],
-            hvo_pickle_filename=params["train_dataset"]["hvo_pickle_filename"],
-            list_of_filter_dicts_for_subsets=list_of_filter_dicts_for_subsets,
-            max_hvo_shape=(32, 27),
-            n_samples_to_use=2048,
-            n_samples_to_synthesize_visualize_per_subset=10,
-            disable_tqdm=False,
-            analyze_heatmap=True,
-            analyze_global_features=True,
-            _identifier="Train_Set"
-        )
-        train_evaluator_subset = train_evaluator.get_ground_truth_hvo_sequences()
-        metadata_train = pd.read_csv(os.path.join(params["train_dataset"]["pickle_source_path"],
-                                                  params["train_dataset"]["subset"],
-                                                  params["train_dataset"]["metadata_csv_filename"]))
-        train_eval_inputs, _, _ = process_dataset(train_evaluator_subset, metadata=metadata_train,
-                                                  max_len=params["train_dataset"]["max_len"],
-                                                  tappify_params=params["tappify_params"])
+        if params["train_eval"]:
 
-        # TEST EVALUATOR
-        test_evaluator = Evaluator(
-            pickle_source_path=params["test_dataset"]["pickle_source_path"],
-            set_subfolder=params["test_dataset"]["subset"],
-            hvo_pickle_filename=params["test_dataset"]["hvo_pickle_filename"],
-            list_of_filter_dicts_for_subsets=list_of_filter_dicts_for_subsets,
-            max_hvo_shape=(32, 27),
-            n_samples_to_use=2048,
-            n_samples_to_synthesize_visualize_per_subset=10,
-            disable_tqdm=False,
-            analyze_heatmap=True,
-            analyze_global_features=True,
-            _identifier="Test_Set"
-        )
-        test_evaluator_subset = test_evaluator.get_ground_truth_hvo_sequences()
-        metadata_test = pd.read_csv(os.path.join(params["test_dataset"]["pickle_source_path"],
-                                                 params["test_dataset"]["subset"],
-                                                 params["test_dataset"]["metadata_csv_filename"]))
-        test_eval_inputs, _, _ = process_dataset(test_evaluator_subset, metadata=metadata_test,
-                                                  max_len=params["test_dataset"]["max_len"],
-                                                  tappify_params=params["tappify_params"])
+            # TRAIN EVALUATOR
+            train_evaluator = Evaluator(
+                pickle_source_path=params["train_dataset"]["pickle_source_path"],
+                set_subfolder=params["train_dataset"]["subset"],
+                hvo_pickle_filename=params["train_dataset"]["hvo_pickle_filename"],
+                list_of_filter_dicts_for_subsets=list_of_filter_dicts_for_subsets,
+                max_hvo_shape=(32, 27),
+                n_samples_to_use=2048,
+                n_samples_to_synthesize_visualize_per_subset=10,
+                disable_tqdm=False,
+                analyze_heatmap=True,
+                analyze_global_features=True,
+                _identifier="Train_Set"
+            )
+            train_evaluator_subset = train_evaluator.get_ground_truth_hvo_sequences()
+            metadata_train = pd.read_csv(os.path.join(params["train_dataset"]["pickle_source_path"],
+                                                      params["train_dataset"]["subset"],
+                                                      params["train_dataset"]["metadata_csv_filename"]))
+            train_eval_inputs, _, _ = process_dataset(train_evaluator_subset, metadata=metadata_train,
+                                                      max_len=params["train_dataset"]["max_len"],
+                                                      tappify_params=params["tappify_params"])
+
+        if params["test_eval"]:
+
+            # TEST EVALUATOR
+            test_evaluator = Evaluator(
+                pickle_source_path=params["test_dataset"]["pickle_source_path"],
+                set_subfolder=params["test_dataset"]["subset"],
+                hvo_pickle_filename=params["test_dataset"]["hvo_pickle_filename"],
+                list_of_filter_dicts_for_subsets=list_of_filter_dicts_for_subsets,
+                max_hvo_shape=(32, 27),
+                n_samples_to_use=2048,
+                n_samples_to_synthesize_visualize_per_subset=10,
+                disable_tqdm=False,
+                analyze_heatmap=True,
+                analyze_global_features=True,
+                _identifier="Test_Set"
+            )
+            test_evaluator_subset = test_evaluator.get_ground_truth_hvo_sequences()
+            metadata_test = pd.read_csv(os.path.join(params["test_dataset"]["pickle_source_path"],
+                                                     params["test_dataset"]["subset"],
+                                                     params["test_dataset"]["metadata_csv_filename"]))
+            test_eval_inputs, _, _ = process_dataset(test_evaluator_subset, metadata=metadata_test,
+                                                      max_len=params["test_dataset"]["max_len"],
+                                                      tappify_params=params["tappify_params"])
 
 
     # GENERATE FREQUENCY LOG ARRAYS
@@ -201,10 +208,8 @@ if __name__ == "__main__":
                        encoder_only=params["model"]["encoder_only"])
             print("-------------------------------\n")
 
-            if params["evaluator_on"]:
-
-                if i in epoch_save_partial or i in epoch_save_all:
-
+            if i in epoch_save_partial or i in epoch_save_all:
+                if params["train_eval"]:
                     # EVAL TRAIN
                     # --------------------------------------------------------------------------------------------------
                     train_evaluator._identifier = 'Train_Set_Epoch_{}'.format(ep)
@@ -236,7 +241,7 @@ if __name__ == "__main__":
                     #---------------------------------------------------------------------------------------------------
                     wandb.log({"epoch": ep})
 
-
+                if params["test_eval"]:
                     # EVAL TEST
                     #---------------------------------------------------------------------------------------------------
                     test_evaluator._identifier = 'Test_Set_Epoch_{}'.format(ep)
@@ -267,6 +272,5 @@ if __name__ == "__main__":
                     test_evaluator.dump(path="misc/test_set_evaluator_run_{}_Epoch_{}.Eval".format(wandb_run.name, ep))
                     #---------------------------------------------------------------------------------------------------
                     wandb.log({"epoch": ep})
-
     finally:
         wandb.finish()
