@@ -208,7 +208,7 @@ if __name__ == "__main__":
                        encoder_only=params["model"]["encoder_only"])
             print("-------------------------------\n")
 
-            test_evaluator._identifier = 'Test_Set_Epoch_{}'.format(ep)
+            test_evaluator._identifier = 'Test_Set'
             test_eval_pred = torch.cat(model.predict(test_eval_inputs, use_thres=True, thres=0.5), dim=2)
             test_eval_pred_hvo_array = test_eval_pred.cpu().detach().numpy()
             test_evaluator.add_predictions(test_eval_pred_hvo_array)
@@ -260,7 +260,7 @@ if __name__ == "__main__":
                 if params["test_eval"]:
                     # EVAL TEST
                     #---------------------------------------------------------------------------------------------------
-                    # test_evaluator._identifier = 'Test_Set_Epoch_{}'.format(ep)
+                    test_evaluator._identifier = 'Test_Set_Epoch_{}'.format(ep)
                     # test_eval_pred = torch.cat(model.predict(test_eval_inputs, use_thres=True, thres=0.5), dim=2)
                     # test_eval_pred_hvo_array = test_eval_pred.cpu().detach().numpy()
                     # test_evaluator.add_predictions(test_eval_pred_hvo_array)
