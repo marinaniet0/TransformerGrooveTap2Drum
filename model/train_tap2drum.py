@@ -205,24 +205,8 @@ if __name__ == "__main__":
             print(f"Epoch {ep}\n-------------------------------")
             train_loop(dataloader=dataloader, groove_transformer=model, opt=optimizer, epoch=ep, loss_fn=calculate_loss,
                        bce_fn=BCE_fn, mse_fn=MSE_fn, save=save_model, device=params["model"]["device"],
-                       encoder_only=params["model"]["encoder_only"])
+                       encoder_only=params["model"]["encoder_only"], test_inputs=test_eval_inputs)
             print("-------------------------------\n")
-
-            test_evaluator._identifier = 'Test_Set'
-            test_eval_pred = torch.cat(model.predict(test_eval_inputs, use_thres=True, thres=0.5), dim=2)
-            test_eval_pred_hvo_array = test_eval_pred.cpu().detach().numpy()
-            test_evaluator.add_predictions(test_eval_pred_hvo_array)
-
-            # Evaluate
-            test_acc_h = test_evaluator.get_hits_accuracies(drum_mapping=ROLAND_REDUCED_MAPPING)
-            test_mse_v = test_evaluator.get_velocity_errors(drum_mapping=ROLAND_REDUCED_MAPPING)
-            test_mse_o = test_evaluator.get_micro_timing_errors(drum_mapping=ROLAND_REDUCED_MAPPING)
-            # rhythmic_distances = test_evaluator.get_rhythmic_distances()
-
-            # Log
-            wandb.log(test_acc_h, commit=False)
-            wandb.log(test_mse_v, commit=False)
-            wandb.log(test_mse_o) # logging test losses every epoch
 
             if i in epoch_save_partial or i in epoch_save_all:
                 if params["train_eval"]:
@@ -261,21 +245,21 @@ if __name__ == "__main__":
                     # EVAL TEST
                     #---------------------------------------------------------------------------------------------------
                     test_evaluator._identifier = 'Test_Set_Epoch_{}'.format(ep)
-                    # test_eval_pred = torch.cat(model.predict(test_eval_inputs, use_thres=True, thres=0.5), dim=2)
-                    # test_eval_pred_hvo_array = test_eval_pred.cpu().detach().numpy()
-                    # test_evaluator.add_predictions(test_eval_pred_hvo_array)
-                    #
-                    # # Evaluate
-                    # test_acc_h = test_evaluator.get_hits_accuracies(drum_mapping=ROLAND_REDUCED_MAPPING)
-                    # test_mse_v = test_evaluator.get_velocity_errors(drum_mapping=ROLAND_REDUCED_MAPPING)
-                    # test_mse_o = test_evaluator.get_micro_timing_errors(drum_mapping=ROLAND_REDUCED_MAPPING)
+                    test_eval_pred = torch.cat(model.predict(test_eval_inputs, use_thres=True, thres=0.5), dim=2)
+                    test_eval_pred_hvo_array = test_eval_pred.cpu().detach().numpy()
+                    test_evaluator.add_predictions(test_eval_pred_hvo_array)
+
+                    # Evaluate
+                    test_acc_h = test_evaluator.get_hits_accuracies(drum_mapping=ROLAND_REDUCED_MAPPING)
+                    test_mse_v = test_evaluator.get_velocity_errors(drum_mapping=ROLAND_REDUCED_MAPPING)
+                    test_mse_o = test_evaluator.get_micro_timing_errors(drum_mapping=ROLAND_REDUCED_MAPPING)
                     # rhythmic_distances = test_evaluator.get_rhythmic_distances()
 
-                    # # Log
-                    # wandb.log(test_acc_h, commit=False)
-                    # wandb.log(test_mse_v, commit=False)
-                    # wandb.log(test_mse_o, commit=False)
-                    # # wandb.log(rhythmic_distances, commit=False)
+                    # Log
+                    wandb.log(test_acc_h, commit=False)
+                    wandb.log(test_mse_v, commit=False)
+                    wandb.log(test_mse_o, commit=False)
+                    # wandb.log(rhythmic_distances, commit=False)
 
                     if i in epoch_save_all:
 
