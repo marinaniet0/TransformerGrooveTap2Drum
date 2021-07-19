@@ -70,6 +70,7 @@ def process_dataset(subset, metadata, max_len, tappify_params):
                 pad_count = max(max_len - hvo_seq.hvo.shape[0], 0)
                 hvo_seq.hvo = np.pad(hvo_seq.hvo, ((0, pad_count), (0, 0)), "constant")
                 hvo_seq.hvo = hvo_seq.hvo[:max_len, :]  # in case seq exceeds max len
+                hvo_seq.offsets = hvo_seq.offsets + 0.5
                 hvo_sequences.append(hvo_seq)
                 flat_seq = hvo_seq.flatten_voices(voice_idx=tapped_voice_idx,
                                               reduce_dim=tappify_params["tapped_sequence_collapsed"],
