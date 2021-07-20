@@ -6,7 +6,7 @@ import pickle
 import sys
 from tqdm import tqdm
 import wandb
-
+import copy
 import numpy as np
 
 
@@ -70,14 +70,16 @@ def process_dataset(subset, metadata, max_len, tappify_params):
                 pad_count = max(max_len - hvo_seq.hvo.shape[0], 0)
                 hvo_seq.hvo = np.pad(hvo_seq.hvo, ((0, pad_count), (0, 0)), "constant")
                 hvo_seq.hvo = hvo_seq.hvo[:max_len, :]  # in case seq exceeds max len
-                hvo_seq.offsets = hvo_seq.offsets + 0.5
                 hvo_sequences.append(hvo_seq)
                 flat_seq = hvo_seq.flatten_voices(voice_idx=tapped_voice_idx,
                                               reduce_dim=tappify_params["tapped_sequence_collapsed"],
                                               offset_aggregator_modes=tappify_params["tapped_sequence_offset_mode"],
                                               velocity_aggregator_modes=tappify_params["tapped_sequence_velocity_mode"])
+                flat_seq[:,18:] = flat_seq[:,18:] + 0.5
+                hvo_seq_mod = copy.deepcopy(hvo_seq.hvo)
+                hvo_seq_mod[:,18:] = hvo_seq_mod[:,18:] + 0.5
                 inputs.append(flat_seq)
-                outputs.append(hvo_seq.hvo)
+                outputs.append(hvo_seq_mod)
 
     # Load data onto device
     dev = "cuda" if torch.cuda.is_available() else "cpu"

@@ -6,6 +6,7 @@ import torch
 from torch.utils.data import DataLoader
 from dataset import GrooveMidiDatasetTap2Drum, process_dataset
 from utils import eval_log_freq
+import copy
 
 sys.path.insert(1, "../../BaseGrooveTransformers/")
 sys.path.insert(1, "../BaseGrooveTransformers/")
@@ -214,7 +215,8 @@ if __name__ == "__main__":
                     # --------------------------------------------------------------------------------------------------
                     train_evaluator._identifier = 'Train_Set_Epoch_{}'.format(ep)
                     train_eval_pred = torch.cat(model.predict(train_eval_inputs, use_thres=True, thres=0.5), dim=2)
-                    train_eval_pred_hvo_array = train_eval_pred.cpu().detach().numpy()
+                    train_eval_pred_hvo_array = copy.deepcopy(train_eval_pred.cpu().detach().numpy())
+                    train_eval_pred_hvo_array[:,:,18:] = train_eval_pred_hvo_array[:,:,18:] - 0.5
                     train_evaluator.add_predictions(train_eval_pred_hvo_array)
 
                     # Evaluate
@@ -246,7 +248,8 @@ if __name__ == "__main__":
                     #---------------------------------------------------------------------------------------------------
                     test_evaluator._identifier = 'Test_Set_Epoch_{}'.format(ep)
                     test_eval_pred = torch.cat(model.predict(test_eval_inputs, use_thres=True, thres=0.5), dim=2)
-                    test_eval_pred_hvo_array = test_eval_pred.cpu().detach().numpy()
+                    test_eval_pred_hvo_array = copy.deepcopy(test_eval_pred.cpu().detach().numpy())
+                    test_eval_pred_hvo_array[:,:,18:] = test_eval_pred_hvo_array[:,:,18:] - 0.5
                     test_evaluator.add_predictions(test_eval_pred_hvo_array)
 
                     # Evaluate
