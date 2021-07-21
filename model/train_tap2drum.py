@@ -190,7 +190,7 @@ if __name__ == "__main__":
             metadata_test = pd.read_csv(os.path.join(params["test_dataset"]["pickle_source_path"],
                                                      params["test_dataset"]["subset"],
                                                      params["test_dataset"]["metadata_csv_filename"]))
-            test_eval_inputs, _, _ = process_dataset(test_evaluator_subset, metadata=metadata_test,
+            test_eval_inputs, test_eval_gt, _ = process_dataset(test_evaluator_subset, metadata=metadata_test,
                                                       max_len=params["test_dataset"]["max_len"],
                                                       tappify_params=params["tappify_params"])
 
@@ -211,7 +211,7 @@ if __name__ == "__main__":
             print(f"Epoch {ep}\n-------------------------------")
             train_loop(dataloader=dataloader, groove_transformer=model, opt=optimizer, epoch=ep, loss_fn=calculate_loss,
                        bce_fn=BCE_fn, mse_fn=MSE_fn, save=save_model, device=params["model"]["device"],
-                       encoder_only=params["model"]["encoder_only"], test_inputs=test_eval_inputs,
+                       encoder_only=params["model"]["encoder_only"], test_inputs=test_eval_inputs, test_gt=test_eval_gt,
                        h_loss_mult=params["model"]["h_loss_multiplier"],
                        v_loss_mult=params["model"]["v_loss_multiplier"],
                        o_loss_mult=params["model"]["o_loss_multiplier"])
