@@ -6,7 +6,6 @@ import pickle
 import sys
 from tqdm import tqdm
 import wandb
-import copy
 import numpy as np
 
 

@@ -6,7 +6,6 @@ import torch
 from torch.utils.data import DataLoader
 from dataset import GrooveMidiDatasetTap2Drum, process_dataset
 from utils import eval_log_freq
-import copy
 
 sys.path.insert(1, "../../BaseGrooveTransformers/")
 sys.path.insert(1, "../BaseGrooveTransformers/")
