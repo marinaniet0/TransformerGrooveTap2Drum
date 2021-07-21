@@ -27,6 +27,18 @@ parameters:
     distribution: 'int_uniform'
     min: 6
     max: 12
+  h_loss_multiplier:
+    distribution: 'uniform'
+    min: 0
+    max: 1
+  v_loss_multiplier:
+    distribution: 'uniform'
+    min: 0
+    max: 1
+  o_loss_multiplier:
+    distribution: 'uniform'
+    min: 0
+    max: 1
   train_eval:
     value: 1 # not sure about booleans in yaml, so using 0 (False) & 1 (True)
   test_eval:
