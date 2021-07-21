@@ -37,8 +37,11 @@ if __name__ == "__main__":
         batch_size=64,
         dim_feedforward=512,  # multiple of d_model
         epochs=1,
-        train_eval=0,
-        test_eval=0
+        h_loss_multiplier=1,
+        v_loss_multiplier=1,
+        o_loss_multiplier=1,
+        train_eval=1,
+        test_eval=1
     )
 
     wandb_run = wandb.init(config=hyperparameter_defaults, project="tap2drum")
@@ -56,6 +59,9 @@ if __name__ == "__main__":
             "embedding_size_src": 27,
             "embedding_size_tgt": 27,
             "encoder_only": True,  # Set to false for encoder-decoder
+            "h_loss_multiplier": wandb.config.h_loss_multiplier,
+            "v_loss_multiplier": wandb.config.v_loss_multiplier,
+            "o_loss_multiplier": wandb.config.o_loss_multiplier,
             "device": "cuda" if torch.cuda.is_available() else "cpu"
         },
         "training": {
@@ -205,7 +211,10 @@ if __name__ == "__main__":
             print(f"Epoch {ep}\n-------------------------------")
             train_loop(dataloader=dataloader, groove_transformer=model, opt=optimizer, epoch=ep, loss_fn=calculate_loss,
                        bce_fn=BCE_fn, mse_fn=MSE_fn, save=save_model, device=params["model"]["device"],
-                       encoder_only=params["model"]["encoder_only"])
+                       encoder_only=params["model"]["encoder_only"], test_inputs=test_eval_inputs,
+                       h_loss_mult=params["model"]["h_loss_multiplier"],
+                       v_loss_mult=params["model"]["v_loss_multiplier"],
+                       o_loss_mult=params["model"]["o_loss_multiplier"])
             print("-------------------------------\n")
 
             if i in epoch_save_partial or i in epoch_save_all:
