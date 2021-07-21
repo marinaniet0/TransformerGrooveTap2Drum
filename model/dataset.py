@@ -75,11 +75,7 @@ def process_dataset(subset, metadata, max_len, tappify_params):
                                               reduce_dim=tappify_params["tapped_sequence_collapsed"],
                                               offset_aggregator_modes=tappify_params["tapped_sequence_offset_mode"],
                                               velocity_aggregator_modes=tappify_params["tapped_sequence_velocity_mode"])
-                # flat_seq[:,18:] = flat_seq[:,18:] + 0.5
-                #hvo_seq_mod = copy.deepcopy(hvo_seq.hvo)
-                # hvo_seq_mod[:,18:] = hvo_seq_mod[:,18:] + 0.5
                 inputs.append(flat_seq)
-                # outputs.append(hvo_seq_mod)
                 outputs.append(hvo_seq.hvo)
 
     # Load data onto device
