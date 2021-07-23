@@ -32,7 +32,7 @@ default_tap_params = {
 default_max_len = 32
 
 
-def process_dataset(subset, metadata, max_len, tappify_params):
+def process_dataset(subset, metadata, max_len, tappify_params, loss_hit_penalty_multiplier):
     """Process subset of GMD dataset for Tap2Drum
 
     @:param subset
@@ -53,6 +53,7 @@ def process_dataset(subset, metadata, max_len, tappify_params):
     inputs = []
     outputs = []
     hvo_sequences = []
+    loss_penalties = []
     tapped_voice_idx = list(ROLAND_REDUCED_MAPPING.keys()).index(tappify_params["tapped_sequence_voice"])
     for idx, hvo_seq in enumerate(tqdm(subset)):
         if len(hvo_seq.time_signatures) == 1:
@@ -74,15 +75,18 @@ def process_dataset(subset, metadata, max_len, tappify_params):
                                               reduce_dim=tappify_params["tapped_sequence_collapsed"],
                                               offset_aggregator_modes=tappify_params["tapped_sequence_offset_mode"],
                                               velocity_aggregator_modes=tappify_params["tapped_sequence_velocity_mode"])
+                loss_p = np.where(hvo_seq.hvo == 0, 1, loss_hit_penalty_multiplier)[:,:int(hvo_seq.hvo.shape[1]/3)]
                 inputs.append(flat_seq)
                 outputs.append(hvo_seq.hvo)
+                loss_penalties.append(loss_p)
 
     # Load data onto device
     dev = "cuda" if torch.cuda.is_available() else "cpu"
     inputs = torch.FloatTensor(inputs).to(dev)
     outputs = torch.FloatTensor(outputs).to(dev)
+    loss_penalties = torch.FloatTensor(loss_penalties).to(dev)
 
-    return inputs, outputs, hvo_sequences
+    return inputs, outputs, loss_penalties, hvo_sequences
 
 class GrooveMidiDatasetTap2Drum(Dataset):
     """
@@ -130,7 +134,7 @@ class GrooveMidiDatasetTap2Drum(Dataset):
         # Get kwargs
         max_len = kwargs.get("max_len", default_max_len)
         tappify_params = kwargs.get("tappify_params", default_tap_params)
-
+        loss_hit_penalty_multiplier = kwargs.get("loss_hit_penalty_multiplier", )
         print("Loading dataset...")
 
         # Loading metadata onto DataFrame
@@ -138,7 +142,7 @@ class GrooveMidiDatasetTap2Drum(Dataset):
                                             subset_info["metadata_csv_filename"]))
 
         # Get processed inputs, outputs and hvo sequences
-        self.inputs, self.outputs, self.sequences = process_dataset(subset, metadata, max_len, tappify_params)
+        self.inputs, self.outputs, self.loss_penalties, self.sequences = process_dataset(subset, metadata, max_len, tappify_params, loss_hit_penalty_multiplier)
 
         # wandb.config.update({"set_length": len(self.sequences)})
         print("Dataset loaded\n")
@@ -147,7 +151,7 @@ class GrooveMidiDatasetTap2Drum(Dataset):
         return len(self.sequences)
 
     def __getitem__(self, idx):
-        return self.inputs[idx], self.outputs[idx], idx
+        return self.inputs[idx], self.outputs[idx], self.loss_penalties[idx], idx
 
     def get_hvo_sequence(self, idx):
         return self.sequences[idx]

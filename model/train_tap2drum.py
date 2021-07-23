@@ -37,9 +37,7 @@ if __name__ == "__main__":
         batch_size=64,
         dim_feedforward=512,  # multiple of d_model
         epochs=1,
-        h_loss_multiplier=1,
-        v_loss_multiplier=1,
-        o_loss_multiplier=1,
+        loss_hit_penalty_multiplier=5,
         train_eval=1,
         test_eval=1
     )
@@ -59,9 +57,7 @@ if __name__ == "__main__":
             "embedding_size_src": 27,
             "embedding_size_tgt": 27,
             "encoder_only": True,  # Set to false for encoder-decoder
-            "h_loss_multiplier": wandb.config.h_loss_multiplier,
-            "v_loss_multiplier": wandb.config.v_loss_multiplier,
-            "o_loss_multiplier": wandb.config.o_loss_multiplier,
+            "loss_hit_penalty_multiplier": wandb.config.loss_hit_penalty_multiplier,
             "device": "cuda" if torch.cuda.is_available() else "cpu"
         },
         "training": {
@@ -129,7 +125,8 @@ if __name__ == "__main__":
                                          list_of_filter_dicts_for_subsets=[params["train_dataset"]["filters"]]).create_subsets()
 
     gmd = GrooveMidiDatasetTap2Drum(subset=subset_list[0], subset_info=params["train_dataset"],
-                                    tappify_params=params["tappify_params"], max_len=params["train_dataset"]["max_len"])
+                                    tappify_params=params["tappify_params"], max_len=params["train_dataset"]["max_len"],
+                                    loss_hit_penalty_multiplier=params["model"]["loss_hit_penalty_multiplier"])
 
     dataloader = DataLoader(gmd, batch_size=params["training"]["batch_size"], shuffle=True)
 
@@ -166,9 +163,10 @@ if __name__ == "__main__":
             metadata_train = pd.read_csv(os.path.join(params["train_dataset"]["pickle_source_path"],
                                                       params["train_dataset"]["subset"],
                                                       params["train_dataset"]["metadata_csv_filename"]))
-            train_eval_inputs, _, _ = process_dataset(train_evaluator_subset, metadata=metadata_train,
-                                                      max_len=params["train_dataset"]["max_len"],
-                                                      tappify_params=params["tappify_params"])
+            train_eval_inputs, _, _, _ = process_dataset(train_evaluator_subset, metadata=metadata_train,
+                                                         max_len=params["train_dataset"]["max_len"],
+                                                         tappify_params=params["tappify_params"],
+                                                         loss_hit_penalty_multiplier=params["model"]["loss_hit_penalty_multiplier"])
 
         if params["test_eval"]:
 
@@ -190,9 +188,10 @@ if __name__ == "__main__":
             metadata_test = pd.read_csv(os.path.join(params["test_dataset"]["pickle_source_path"],
                                                      params["test_dataset"]["subset"],
                                                      params["test_dataset"]["metadata_csv_filename"]))
-            test_eval_inputs, test_eval_gt, _ = process_dataset(test_evaluator_subset, metadata=metadata_test,
-                                                      max_len=params["test_dataset"]["max_len"],
-                                                      tappify_params=params["tappify_params"])
+            test_eval_inputs, test_eval_gt, test_eval_loss_penalties, _ = process_dataset(test_evaluator_subset, metadata=metadata_test,
+                                                                                          max_len=params["test_dataset"]["max_len"],
+                                                                                          tappify_params=params["tappify_params"],
+                                                                                          loss_hit_penalty_multiplier=params["model"]["loss_hit_penalty_multiplier"])
 
 
     # GENERATE FREQUENCY LOG ARRAYS
@@ -212,9 +211,7 @@ if __name__ == "__main__":
             train_loop(dataloader=dataloader, groove_transformer=model, opt=optimizer, epoch=ep, loss_fn=calculate_loss,
                        bce_fn=BCE_fn, mse_fn=MSE_fn, save=save_model, device=params["model"]["device"],
                        encoder_only=params["model"]["encoder_only"], test_inputs=test_eval_inputs, test_gt=test_eval_gt,
-                       h_loss_mult=params["model"]["h_loss_multiplier"],
-                       v_loss_mult=params["model"]["v_loss_multiplier"],
-                       o_loss_mult=params["model"]["o_loss_multiplier"])
+                       test_eval_loss_penalties=test_eval_loss_penalties)
             print("-------------------------------\n")
 
             if i in epoch_save_partial or i in epoch_save_all:
