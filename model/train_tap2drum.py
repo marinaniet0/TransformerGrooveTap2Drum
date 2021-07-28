@@ -37,7 +37,7 @@ if __name__ == "__main__":
         batch_size=64,
         dim_feedforward=512,  # multiple of d_model
         epochs=1,
-        loss_hit_penalty_multiplier=5,
+        loss_hit_penalty_multiplier=1,
         train_eval=1,
         test_eval=1
     )

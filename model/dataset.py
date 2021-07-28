@@ -75,7 +75,7 @@ def process_dataset(subset, metadata, max_len, tappify_params, loss_hit_penalty_
                                               reduce_dim=tappify_params["tapped_sequence_collapsed"],
                                               offset_aggregator_modes=tappify_params["tapped_sequence_offset_mode"],
                                               velocity_aggregator_modes=tappify_params["tapped_sequence_velocity_mode"])
-                loss_p = np.where(hvo_seq.hvo == 0, 1, loss_hit_penalty_multiplier)[:,:int(hvo_seq.hvo.shape[1]/3)]
+                loss_p = np.where(hvo_seq.hvo == 1, 1, loss_hit_penalty_multiplier)[:,:int(hvo_seq.hvo.shape[1]/3)]
                 inputs.append(flat_seq)
                 outputs.append(hvo_seq.hvo)
                 loss_penalties.append(loss_p)
