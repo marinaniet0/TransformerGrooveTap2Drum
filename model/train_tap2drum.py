@@ -125,8 +125,7 @@ if __name__ == "__main__":
                                          list_of_filter_dicts_for_subsets=[params["train_dataset"]["filters"]]).create_subsets()
 
     gmd = GrooveMidiDatasetTap2Drum(subset=subset_list[0], subset_info=params["train_dataset"],
-                                    tappify_params=params["tappify_params"], max_len=params["train_dataset"]["max_len"],
-                                    loss_hit_penalty_multiplier=params["model"]["loss_hit_penalty_multiplier"])
+                                    tappify_params=params["tappify_params"], max_len=params["train_dataset"]["max_len"])
 
     dataloader = DataLoader(gmd, batch_size=params["training"]["batch_size"], shuffle=True)
 
@@ -163,10 +162,9 @@ if __name__ == "__main__":
             metadata_train = pd.read_csv(os.path.join(params["train_dataset"]["pickle_source_path"],
                                                       params["train_dataset"]["subset"],
                                                       params["train_dataset"]["metadata_csv_filename"]))
-            train_eval_inputs, _, _, _ = process_dataset(train_evaluator_subset, metadata=metadata_train,
+            train_eval_inputs, _, _ = process_dataset(train_evaluator_subset, metadata=metadata_train,
                                                          max_len=params["train_dataset"]["max_len"],
-                                                         tappify_params=params["tappify_params"],
-                                                         loss_hit_penalty_multiplier=params["model"]["loss_hit_penalty_multiplier"])
+                                                         tappify_params=params["tappify_params"])
 
         if params["test_eval"]:
 
@@ -188,10 +186,9 @@ if __name__ == "__main__":
             metadata_test = pd.read_csv(os.path.join(params["test_dataset"]["pickle_source_path"],
                                                      params["test_dataset"]["subset"],
                                                      params["test_dataset"]["metadata_csv_filename"]))
-            test_eval_inputs, test_eval_gt, test_eval_loss_penalties, _ = process_dataset(test_evaluator_subset, metadata=metadata_test,
+            test_eval_inputs, test_eval_gt, _ = process_dataset(test_evaluator_subset, metadata=metadata_test,
                                                                                           max_len=params["test_dataset"]["max_len"],
-                                                                                          tappify_params=params["tappify_params"],
-                                                                                          loss_hit_penalty_multiplier=params["model"]["loss_hit_penalty_multiplier"])
+                                                                                          tappify_params=params["tappify_params"])
 
 
     # GENERATE FREQUENCY LOG ARRAYS
@@ -210,8 +207,8 @@ if __name__ == "__main__":
             print(f"Epoch {ep}\n-------------------------------")
             train_loop(dataloader=dataloader, groove_transformer=model, opt=optimizer, epoch=ep, loss_fn=calculate_loss,
                        bce_fn=BCE_fn, mse_fn=MSE_fn, save=save_model, device=params["model"]["device"],
-                       encoder_only=params["model"]["encoder_only"], test_inputs=test_eval_inputs, test_gt=test_eval_gt,
-                       test_eval_loss_penalties=test_eval_loss_penalties)
+                       encoder_only=params["model"]["encoder_only"], hit_loss_penalty=params["model"]["loss_hit_penalty_multiplier"],
+                       test_inputs=test_eval_inputs, test_gt=test_eval_gt)
             print("-------------------------------\n")
 
             if i in epoch_save_partial or i in epoch_save_all:
