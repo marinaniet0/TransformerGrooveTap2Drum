@@ -53,6 +53,7 @@ def process_dataset(subset, metadata, max_len, tappify_params):
     inputs = []
     outputs = []
     hvo_sequences = []
+    loss_penalties = []
     tapped_voice_idx = list(ROLAND_REDUCED_MAPPING.keys()).index(tappify_params["tapped_sequence_voice"])
     for idx, hvo_seq in enumerate(tqdm(subset)):
         if len(hvo_seq.time_signatures) == 1:
@@ -130,7 +131,6 @@ class GrooveMidiDatasetTap2Drum(Dataset):
         # Get kwargs
         max_len = kwargs.get("max_len", default_max_len)
         tappify_params = kwargs.get("tappify_params", default_tap_params)
-
         print("Loading dataset...")
 
         # Loading metadata onto DataFrame

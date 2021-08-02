@@ -37,9 +37,7 @@ if __name__ == "__main__":
         batch_size=64,
         dim_feedforward=512,  # multiple of d_model
         epochs=1,
-        h_loss_multiplier=1,
-        v_loss_multiplier=1,
-        o_loss_multiplier=1,
+        loss_hit_penalty_multiplier=1,
         train_eval=1,
         test_eval=1
     )
@@ -59,9 +57,7 @@ if __name__ == "__main__":
             "embedding_size_src": 27,
             "embedding_size_tgt": 27,
             "encoder_only": True,  # Set to false for encoder-decoder
-            "h_loss_multiplier": wandb.config.h_loss_multiplier,
-            "v_loss_multiplier": wandb.config.v_loss_multiplier,
-            "o_loss_multiplier": wandb.config.o_loss_multiplier,
+            "loss_hit_penalty_multiplier": wandb.config.loss_hit_penalty_multiplier,
             "device": "cuda" if torch.cuda.is_available() else "cpu"
         },
         "training": {
@@ -167,8 +163,8 @@ if __name__ == "__main__":
                                                       params["train_dataset"]["subset"],
                                                       params["train_dataset"]["metadata_csv_filename"]))
             train_eval_inputs, _, _ = process_dataset(train_evaluator_subset, metadata=metadata_train,
-                                                      max_len=params["train_dataset"]["max_len"],
-                                                      tappify_params=params["tappify_params"])
+                                                         max_len=params["train_dataset"]["max_len"],
+                                                         tappify_params=params["tappify_params"])
 
         if params["test_eval"]:
 
@@ -191,8 +187,8 @@ if __name__ == "__main__":
                                                      params["test_dataset"]["subset"],
                                                      params["test_dataset"]["metadata_csv_filename"]))
             test_eval_inputs, test_eval_gt, _ = process_dataset(test_evaluator_subset, metadata=metadata_test,
-                                                      max_len=params["test_dataset"]["max_len"],
-                                                      tappify_params=params["tappify_params"])
+                                                                                          max_len=params["test_dataset"]["max_len"],
+                                                                                          tappify_params=params["tappify_params"])
 
 
     # GENERATE FREQUENCY LOG ARRAYS
@@ -211,10 +207,8 @@ if __name__ == "__main__":
             print(f"Epoch {ep}\n-------------------------------")
             train_loop(dataloader=dataloader, groove_transformer=model, opt=optimizer, epoch=ep, loss_fn=calculate_loss,
                        bce_fn=BCE_fn, mse_fn=MSE_fn, save=save_model, device=params["model"]["device"],
-                       encoder_only=params["model"]["encoder_only"], test_inputs=test_eval_inputs, test_gt=test_eval_gt,
-                       h_loss_mult=params["model"]["h_loss_multiplier"],
-                       v_loss_mult=params["model"]["v_loss_multiplier"],
-                       o_loss_mult=params["model"]["o_loss_multiplier"])
+                       encoder_only=params["model"]["encoder_only"], hit_loss_penalty=params["model"]["loss_hit_penalty_multiplier"],
+                       test_inputs=test_eval_inputs, test_gt=test_eval_gt)
             print("-------------------------------\n")
 
             if i in epoch_save_partial or i in epoch_save_all:
