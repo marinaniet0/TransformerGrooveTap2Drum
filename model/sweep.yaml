@@ -28,12 +28,14 @@ parameters:
     min: 6
     max: 12
   loss_hit_penalty_multiplier:
-    distribution: 'int_uniform'
-    min: 1
-    max: 10
+    distribution: uniform
+    max: 1
+    min: 0
   train_eval:
     value: 1 # not sure about booleans in yaml, so using 0 (False) & 1 (True)
   test_eval:
+    value: 1
+  load_evaluator:
     value: 1
   epochs:
     value: 100

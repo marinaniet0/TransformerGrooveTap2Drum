@@ -6,6 +6,7 @@ import torch
 from torch.utils.data import DataLoader
 from dataset import GrooveMidiDatasetTap2Drum, process_dataset
 from utils import eval_log_freq
+import pickle
 
 sys.path.insert(1, "../../BaseGrooveTransformers/")
 sys.path.insert(1, "../BaseGrooveTransformers/")
@@ -39,7 +40,8 @@ if __name__ == "__main__":
         epochs=1,
         loss_hit_penalty_multiplier=1,
         train_eval=1,
-        test_eval=1
+        test_eval=1,
+        load_evaluator=1
     )
 
     wandb_run = wandb.init(config=hyperparameter_defaults, project="tap2drum")
@@ -94,6 +96,7 @@ if __name__ == "__main__":
             "tapped_sequence_velocity_mode": 1,
             "tapped_sequence_offset_mode": 3
         },
+        "load_evaluator": wandb.config.load_evaluator,
         "load_model": None,  # if we don't want to load any model, set to None
         #"load_model": {
         #    "location": "local",
@@ -144,67 +147,79 @@ if __name__ == "__main__":
 
         if params["train_eval"]:
 
-            # TRAIN EVALUATOR
-            train_evaluator = Evaluator(
-                pickle_source_path=params["train_dataset"]["pickle_source_path"],
-                set_subfolder=params["train_dataset"]["subset"],
-                hvo_pickle_filename=params["train_dataset"]["hvo_pickle_filename"],
-                list_of_filter_dicts_for_subsets=list_of_filter_dicts_for_subsets,
-                max_hvo_shape=(32, 27),
-                n_samples_to_use=2048,
-                n_samples_to_synthesize_visualize_per_subset=10,
-                disable_tqdm=False,
-                analyze_heatmap=True,
-                analyze_global_features=True,
-                _identifier="Train_Set"
-            )
+            if params["load_evaluator"]:
+                train_evaluator = pickle.load(open('train.evaluator', 'rb'))
+            else:
+                # TRAIN EVALUATOR
+                train_evaluator = Evaluator(
+                    pickle_source_path=params["train_dataset"]["pickle_source_path"],
+                    set_subfolder=params["train_dataset"]["subset"],
+                    hvo_pickle_filename=params["train_dataset"]["hvo_pickle_filename"],
+                    list_of_filter_dicts_for_subsets=list_of_filter_dicts_for_subsets,
+                    max_hvo_shape=(32, 27),
+                    n_samples_to_use=11,
+                    n_samples_to_synthesize_visualize_per_subset=10,
+                    disable_tqdm=False,
+                    analyze_heatmap=True,
+                    analyze_global_features=True,
+                    _identifier="Train_Set"
+                )
             train_evaluator_subset = train_evaluator.get_ground_truth_hvo_sequences()
             metadata_train = pd.read_csv(os.path.join(params["train_dataset"]["pickle_source_path"],
                                                       params["train_dataset"]["subset"],
                                                       params["train_dataset"]["metadata_csv_filename"]))
+            print("Generating inputs for train evaluator...")
             train_eval_inputs, _, _ = process_dataset(train_evaluator_subset, metadata=metadata_train,
                                                          max_len=params["train_dataset"]["max_len"],
                                                          tappify_params=params["tappify_params"])
+            print("Inputs for train evaluator generated.")
 
         if params["test_eval"]:
-
-            # TEST EVALUATOR
-            test_evaluator = Evaluator(
-                pickle_source_path=params["test_dataset"]["pickle_source_path"],
-                set_subfolder=params["test_dataset"]["subset"],
-                hvo_pickle_filename=params["test_dataset"]["hvo_pickle_filename"],
-                list_of_filter_dicts_for_subsets=list_of_filter_dicts_for_subsets,
-                max_hvo_shape=(32, 27),
-                n_samples_to_use=2048,
-                n_samples_to_synthesize_visualize_per_subset=10,
-                disable_tqdm=False,
-                analyze_heatmap=True,
-                analyze_global_features=True,
-                _identifier="Test_Set"
-            )
+            if params["load_evaluator"]:
+                test_evaluator = pickle.load(open('test.evaluator', 'rb'))
+            else:
+                # TEST EVALUATOR
+                test_evaluator = Evaluator(
+                    pickle_source_path=params["test_dataset"]["pickle_source_path"],
+                    set_subfolder=params["test_dataset"]["subset"],
+                    hvo_pickle_filename=params["test_dataset"]["hvo_pickle_filename"],
+                    list_of_filter_dicts_for_subsets=list_of_filter_dicts_for_subsets,
+                    max_hvo_shape=(32, 27),
+                    n_samples_to_use=11,
+                    n_samples_to_synthesize_visualize_per_subset=10,
+                    disable_tqdm=False,
+                    analyze_heatmap=True,
+                    analyze_global_features=True,
+                    _identifier="Test_Set"
+                )
             test_evaluator_subset = test_evaluator.get_ground_truth_hvo_sequences()
             metadata_test = pd.read_csv(os.path.join(params["test_dataset"]["pickle_source_path"],
                                                      params["test_dataset"]["subset"],
                                                      params["test_dataset"]["metadata_csv_filename"]))
+            print("\nGenerating inputs for test evaluator...")
             test_eval_inputs, test_eval_gt, _ = process_dataset(test_evaluator_subset, metadata=metadata_test,
                                                                                           max_len=params["test_dataset"]["max_len"],
                                                                                           tappify_params=params["tappify_params"])
+            print("Inputs for test evaluator generated.")
 
 
     # GENERATE FREQUENCY LOG ARRAYS
-    # epoch_save_partial, epoch_save_all = eval_log_freq(total_epochs=eps, initial_epochs_lim=10, initial_step_partial=2,
-    #                                                    initial_step_all=2, secondary_step_partial=5,
-    #                                                    secondary_step_all=10)
+    epoch_save_partial, epoch_save_all = eval_log_freq(total_epochs=eps, initial_epochs_lim=10, initial_step_partial=1,
+                                                       initial_step_all=1, secondary_step_partial=5,
+                                                       secondary_step_all=5)
 
     # ONLY EVAL ON LAST EPOCH
-    epoch_save_partial, epoch_save_all = [eps-1], [eps-1]
-
+    # epoch_save_partial, epoch_save_all = [eps-1], [eps-1]
+    print("\nPartial evaluation saved on epoch(s) ", str(epoch_save_partial))
+    print("Full evaluation saved on epoch(s) ", str(epoch_save_all))
+    print("\nTraining model...")
     try:
         for i in np.arange(eps):
             ep += 1
+            recalculate_gt = True if ep == 1 else False
             save_model = (i in epoch_save_partial or i in epoch_save_all)
 
-            print(f"Epoch {ep}\n-------------------------------")
+            print(f"\nEpoch {ep}\n-------------------------------")
             train_loop(dataloader=dataloader, groove_transformer=model, opt=optimizer, epoch=ep, loss_fn=calculate_loss,
                        bce_fn=BCE_fn, mse_fn=MSE_fn, save=save_model, device=params["model"]["device"],
                        encoder_only=params["model"]["encoder_only"], hit_loss_penalty=params["model"]["loss_hit_penalty_multiplier"],
@@ -215,7 +230,7 @@ if __name__ == "__main__":
                 if params["train_eval"]:
                     # EVAL TRAIN
                     # --------------------------------------------------------------------------------------------------
-                    train_evaluator._identifier = 'Train_Set_Epoch_{}'.format(ep)
+                    train_evaluator._identifier = 'Train_Set'
                     train_eval_pred = torch.cat(model.predict(train_eval_inputs, use_thres=True, thres=0.5), dim=2)
                     train_eval_pred_hvo_array = train_eval_pred.cpu().detach().numpy()
                     train_evaluator.add_predictions(train_eval_pred_hvo_array)
@@ -229,14 +244,15 @@ if __name__ == "__main__":
                     # Log
                     wandb.log(train_acc_h, commit=False)
                     wandb.log(train_mse_v, commit=False)
-                    wandb.log(train_mse_o, commit=False)
+                    wandb.log(train_mse_o)
                     # wandb.log(train_rhythmic_distances, commit=False)
 
                     if i in epoch_save_all:
-
+                        train_evaluator._identifier = 'Train_Set_Epoch_{}'.format(ep)
                         # Heatmaps train
                         train_heatmaps_global_features = train_evaluator.get_wandb_logging_media(
-                            sf_paths=["../../hvo_sequence/hvo_sequence/soundfonts/Standard_Drum_Kit.sf2"])
+                            sf_paths=["../../hvo_sequence/hvo_sequence/soundfonts/Standard_Drum_Kit.sf2"],
+                            recalculate_ground_truth=recalculate_gt)
                         if len(train_heatmaps_global_features.keys()) > 0:
                             wandb.log(train_heatmaps_global_features, commit=False)
 
@@ -247,7 +263,7 @@ if __name__ == "__main__":
                 if params["test_eval"]:
                     # EVAL TEST
                     #---------------------------------------------------------------------------------------------------
-                    test_evaluator._identifier = 'Test_Set_Epoch_{}'.format(ep)
+                    test_evaluator._identifier = 'Test_Set'
                     test_eval_pred = torch.cat(model.predict(test_eval_inputs, use_thres=True, thres=0.5), dim=2)
                     test_eval_pred_hvo_array = test_eval_pred.cpu().detach().numpy()
                     test_evaluator.add_predictions(test_eval_pred_hvo_array)
@@ -261,14 +277,15 @@ if __name__ == "__main__":
                     # Log
                     wandb.log(test_acc_h, commit=False)
                     wandb.log(test_mse_v, commit=False)
-                    wandb.log(test_mse_o, commit=False)
+                    wandb.log(test_mse_o)
                     # wandb.log(rhythmic_distances, commit=False)
 
                     if i in epoch_save_all:
-
+                        test_evaluator._identifier = 'Test_Set_Epoch_{}'.format(ep)
                         # Heatmaps test
                         test_heatmaps_global_features = test_evaluator.get_wandb_logging_media(
-                            sf_paths=["../../hvo_sequence/hvo_sequence/soundfonts/Standard_Drum_Kit.sf2"])
+                            sf_paths=["../../hvo_sequence/hvo_sequence/soundfonts/Standard_Drum_Kit.sf2"],
+                            recalculate_ground_truth=recalculate_gt)
                         if len(test_heatmaps_global_features.keys()) > 0:
                             wandb.log(test_heatmaps_global_features, commit=False)
 
@@ -276,4 +293,5 @@ if __name__ == "__main__":
                     #---------------------------------------------------------------------------------------------------
                     wandb.log({"epoch": ep})
     finally:
+        print("\nDone!")
         wandb.finish()

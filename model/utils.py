@@ -15,4 +15,8 @@ def eval_log_freq(total_epochs, initial_epochs_lim, initial_step_partial, initia
                                                                  stop=total_epochs))
     epoch_save_all = np.append(epoch_save_all, np.arange(start=initial_epochs_lim, step=secondary_step_all,
                                                          stop=total_epochs))
+    if total_epochs-1 not in epoch_save_partial:
+        epoch_save_partial = np.append(epoch_save_partial, total_epochs-1)
+    if total_epochs-1 not in epoch_save_all:
+        epoch_save_all = np.append(epoch_save_all, total_epochs-1)
     return epoch_save_partial, epoch_save_all
