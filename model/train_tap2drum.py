@@ -44,7 +44,7 @@ if __name__ == "__main__":
         load_evaluator=1
     )
 
-    wandb_run = wandb.init(config=hyperparameter_defaults, project="tap2drum")
+    wandb_run = wandb.init(config=hyperparameter_defaults, project="transformer_groove_tap2drum")
 
     params = {
         "model": {
