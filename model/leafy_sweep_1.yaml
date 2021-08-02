@@ -1,0 +1,32 @@
+method: random
+metric:
+  goal: minimize
+  name: loss
+parameters:
+  batch_size:
+    value: 16
+  d_model:
+    value: 128
+  dim_feedforward:
+    value: 128
+  dropout:
+    value: 0.10381670187513244
+  optimizer_algorithm:
+    value: 'sgd'
+  learning_rate:
+    value: 0.03630343938698917
+  n_heads:
+    value: 4
+  num_encoder_decoder_layers:
+    value: 11
+  loss_hit_penalty_multiplier:
+    value: 0.27392781631708074
+  train_eval:
+    value: 1
+  test_eval:
+    value: 1
+  load_evaluator:
+    value: 1
+  epochs:
+    value: 1000
+program: train_tap2drum.py
