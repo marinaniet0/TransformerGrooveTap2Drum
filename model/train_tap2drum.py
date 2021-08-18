@@ -219,7 +219,7 @@ if __name__ == "__main__":
 
             # Loading from local file (generated with gen_eval.py)
             if params["load_evaluator"]:
-                train_evaluator = pickle.load(open('train.evaluator', 'rb'))
+                train_evaluator = pickle.load(open('../evaluators/train.evaluator', 'rb'))
 
             # ... or setting it up from scratch
             else:
@@ -252,7 +252,7 @@ if __name__ == "__main__":
 
         if params["test_eval"]:
             if params["load_evaluator"]:
-                test_evaluator = pickle.load(open('test.evaluator', 'rb'))
+                test_evaluator = pickle.load(open('../evaluators/test.evaluator', 'rb'))
             else:
                 # TEST EVALUATOR
                 test_evaluator = Evaluator(
@@ -279,7 +279,7 @@ if __name__ == "__main__":
 
             if params["validation_eval"]:
                 if params["load_evaluator"]:
-                    validation_evaluator = pickle.load(open('validation.evaluator', 'rb'))
+                    validation_evaluator = pickle.load(open('../evaluators/validation.evaluator', 'rb'))
                 else:
                     # VALIDATION EVALUATOR
                     validation_evaluator = Evaluator(
