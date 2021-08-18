@@ -2,11 +2,12 @@ import sys
 import pickle
 import pandas as pd
 
-
 sys.path.insert(1, "../../GrooveEvaluator/")
 sys.path.insert(1, "../GrooveEvaluator/")
 from GrooveEvaluator.evaluator import Evaluator
 
+# This file generates pickled evaluators to be loaded during training. If the evaluators are loaded,
+# the same examples will be used across runs, allowing to compare results.
 params = {
     "train_dataset": {
         "pickle_source_path": "../../preprocessed_dataset/datasets_extracted_locally/GrooveMidi/hvo_0.4.5"
@@ -24,6 +25,18 @@ params = {
         "pickle_source_path": "../../preprocessed_dataset/datasets_extracted_locally/GrooveMidi/hvo_0.4.5"
                               "/Processed_On_14_06_2021_at_14_26_hrs",
         "subset": "GrooveMIDI_processed_test",
+        "metadata_csv_filename": "metadata.csv",
+        "hvo_pickle_filename": "hvo_sequence_data.obj",
+        "filters": {
+            "beat_type": ["beat"],
+            "time_signature": ["4-4"]
+        },
+        "max_len": 32
+    },
+    "validation_dataset": {
+        "pickle_source_path": "../../preprocessed_dataset/datasets_extracted_locally/GrooveMidi/hvo_0.4.5"
+                              "/Processed_On_14_06_2021_at_14_26_hrs",
+        "subset": "GrooveMIDI_processed_validation",
         "metadata_csv_filename": "metadata.csv",
         "hvo_pickle_filename": "hvo_sequence_data.obj",
         "filters": {
@@ -75,6 +88,21 @@ if __name__ == "__main__":
         _identifier="Test_Set"
     )
 
+    # VALIDATION EVALUATOR
+    validation_evaluator = Evaluator(
+        pickle_source_path=params["validation_dataset"]["pickle_source_path"],
+        set_subfolder=params["validation_dataset"]["subset"],
+        hvo_pickle_filename=params["validation_dataset"]["hvo_pickle_filename"],
+        list_of_filter_dicts_for_subsets=list_of_filter_dicts_for_subsets,
+        max_hvo_shape=(32, 27),
+        n_samples_to_use=1024,
+        n_samples_to_synthesize_visualize_per_subset=10,
+        disable_tqdm=False,
+        analyze_heatmap=True,
+        analyze_global_features=True,
+        _identifier="Validation_Set"
+    )
+
     train_evaluator_file_handle = open('train.evaluator', 'wb')
     pickle.dump(train_evaluator, train_evaluator_file_handle)
     train_evaluator_file_handle.close()
@@ -82,3 +110,7 @@ if __name__ == "__main__":
     test_evaluator_file_handle = open('test.evaluator', 'wb')
     pickle.dump(test_evaluator, test_evaluator_file_handle)
     test_evaluator_file_handle.close()
+
+    validation_evaluator_file_handle = open('validation.evaluator', 'wb')
+    pickle.dump(validation_evaluator, validation_evaluator_file_handle)
+    validation_evaluator_file_handle.close()

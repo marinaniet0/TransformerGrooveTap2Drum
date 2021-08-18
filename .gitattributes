@@ -3,3 +3,4 @@ model/test.evaluator filter=lfs diff=lfs merge=lfs -text
 model/train.evaluator filter=lfs diff=lfs merge=lfs -text
 model/groovae_test.evaluator filter=lfs diff=lfs merge=lfs -text
 model/groovae_train.evaluator filter=lfs diff=lfs merge=lfs -text
+model/validation.evaluator filter=lfs diff=lfs merge=lfs -text

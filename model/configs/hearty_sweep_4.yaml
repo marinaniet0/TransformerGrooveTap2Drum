@@ -31,9 +31,12 @@ train_eval:
 test_eval:
   value: 1
   desc: 'Whether an evaluation with the test subset is carried out or not'
+validation_eval:
+  value: 1
+  desc: 'Whether an evaluation with the validation subset is carried out or not'
 load_evaluator:
   value: 1
   desc: 'Whether the evaluators are loaded or not, in which case they are created'
 epochs:
-  value: 1000
+  value: 50
   desc: 'Number of epochs'
