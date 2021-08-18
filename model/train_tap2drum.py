@@ -1,11 +1,13 @@
 import sys
+
 import wandb
 import numpy as np
 import pandas as pd
 import torch
+from tqdm import tqdm
 from torch.utils.data import DataLoader
 from dataset import GrooveMidiDatasetTap2Drum, process_dataset
-from utils import eval_log_freq
+from utils import eval_log_freq, update_dict_with_tapped
 import pickle
 
 # Adding to path repos located at same level in order to use their functions without packaging
@@ -26,6 +28,7 @@ from Subset_Creators.subsetters import GrooveMidiSubsetter
 sys.path.insert(1, "../../hvo_sequence/")
 sys.path.insert(1, "../hvo_sequence/")
 from hvo_sequence.drum_mappings import ROLAND_REDUCED_MAPPING
+from hvo_sequence.hvo_seq import *
 
 if __name__ == "__main__":
 
@@ -368,6 +371,16 @@ if __name__ == "__main__":
                         train_heatmaps_global_features = train_evaluator.get_wandb_logging_media(
                             sf_paths=["../../hvo_sequence/hvo_sequence/soundfonts/Standard_Drum_Kit.sf2"],
                             recalculate_ground_truth=recalculate_gt)
+
+                        if recalculate_gt:
+                            # Adding tapped audios and piano rolls! :)
+                            train_heatmaps_global_features =\
+                                update_dict_with_tapped(sf_path="../../hvo_sequence/hvo_sequence/soundfonts/"
+                                                                "Standard_Drum_Kit.sf2",
+                                                                evaluator=train_evaluator,
+                                                                evaluator_id="Train",
+                                                                wandb_dict=train_heatmaps_global_features)
+
                         if len(train_heatmaps_global_features.keys()) > 0:
                             wandb.log(train_heatmaps_global_features, commit=False)
 
@@ -402,6 +415,16 @@ if __name__ == "__main__":
                         test_heatmaps_global_features = test_evaluator.get_wandb_logging_media(
                             sf_paths=["../../hvo_sequence/hvo_sequence/soundfonts/Standard_Drum_Kit.sf2"],
                             recalculate_ground_truth=recalculate_gt)
+
+                        if recalculate_gt:
+                            # Adding tapped audios and piano rolls
+                            test_heatmaps_global_features =\
+                                update_dict_with_tapped(sf_path="../../hvo_sequence/hvo_sequence/soundfonts/"
+                                                                "Standard_Drum_Kit.sf2",
+                                                                evaluator=test_evaluator,
+                                                                evaluator_id="Test",
+                                                                wandb_dict=test_heatmaps_global_features)
+
                         if len(test_heatmaps_global_features.keys()) > 0:
                             wandb.log(test_heatmaps_global_features, commit=False)
 
@@ -437,6 +460,15 @@ if __name__ == "__main__":
                         validation_heatmaps_global_features = validation_evaluator.get_wandb_logging_media(
                             sf_paths=["../../hvo_sequence/hvo_sequence/soundfonts/Standard_Drum_Kit.sf2"],
                             recalculate_ground_truth=recalculate_gt)
+
+                        if recalculate_gt:
+                            # Adding tapped audios and piano rolls
+                            validation_heatmaps_global_features =\
+                                update_dict_with_tapped(sf_path="../../hvo_sequence/hvo_sequence/soundfonts/"
+                                                                "Standard_Drum_Kit.sf2",
+                                                                evaluator=validation_evaluator,
+                                                                evaluator_id="Validation",
+                                                                wandb_dict=validation_heatmaps_global_features)
                         if len(validation_heatmaps_global_features.keys()) > 0:
                             wandb.log(validation_heatmaps_global_features, commit=False)
 
