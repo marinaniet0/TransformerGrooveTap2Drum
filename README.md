@@ -5,7 +5,8 @@ by the Magenta team in their [Groove project](https://magenta.tensorflow.org/dat
 Groove with Inverse Sequence Transformations](https://arxiv.org/abs/1905.06118), including the very own definition of
 the Tap2Drum task.
 
-The repo has been developed along (and depends on) these projects:  
+The repo has been developed along (and depends on) these projects (the links might not work for the moment, as
+they are in private mode, but will eventually be public):  
  - [hvo_sequence](https://github.com/behzadhaki/hvo_sequence) - HVO data structure definition (which is the data type we
   will use to train the model) & functions to transform between hvo, [note_seq](https://github.com/magenta/note-seq)
   and MIDI formats
