@@ -41,25 +41,25 @@ def update_dict_with_tapped(sf_path, evaluator, evaluator_id, wandb_dict):
     sampled_hvos = get_samples_hvo_eval(evaluator)
 
     # AUDIOS
-    # tapped_audios = []
-    # tapped_captions = []
-    # for key in tqdm(sampled_hvos.keys(),
-    #                 desc='Synthesizing samples - {}_Set_Tapped'.format(evaluator_id)):
-    #     for sample_hvo in sampled_hvos[key]:
-    #         tapped_hvo = zero_like(sample_hvo)
-    #         tapped_hvo.hvo = sample_hvo.flatten_voices()
-    #         tapped_audios.append(tapped_hvo.synthesize(sf_path=sf_path))
-    #         tapped_captions.append("{}_{}_{}.wav".format(
-    #             "{}_Set_Tapped".format(evaluator_id), sample_hvo.metadata.style_primary,
-    #             sample_hvo.metadata.master_id.replace("/", "_")))
-    # # sort so that they are alphabetically ordered in wandb
-    # sort_index = np.argsort(tapped_captions)
-    # tapped_captions = np.array(tapped_captions)[sort_index].tolist()
-    # tapped_audios = np.array(tapped_audios)[sort_index].tolist()
-    # tapped_captions_audios_tuples = list(zip(tapped_captions, tapped_audios))
-    # tapped_captions_audios = [(c_a[0], c_a[1]) for c_a in tapped_captions_audios_tuples]
-    # wandb_dict["audios"].update({"{}_Set_Tapped".format(evaluator_id): [
-    #     wandb.Audio(c_a[1], caption=c_a[0], sample_rate=44100) for c_a in tapped_captions_audios]})
+    tapped_audios = []
+    tapped_captions = []
+    for key in tqdm(sampled_hvos.keys(),
+                    desc='Synthesizing samples - {}_Set_Tapped'.format(evaluator_id)):
+        for sample_hvo in sampled_hvos[key]:
+            tapped_hvo = zero_like(sample_hvo)
+            tapped_hvo.hvo = sample_hvo.flatten_voices()
+            tapped_audios.append(tapped_hvo.synthesize(sf_path=sf_path))
+            tapped_captions.append("{}_{}_{}.wav".format(
+                "{}_Set_Tapped".format(evaluator_id), sample_hvo.metadata.style_primary,
+                sample_hvo.metadata.master_id.replace("/", "_")))
+    # sort so that they are alphabetically ordered in wandb
+    sort_index = np.argsort(tapped_captions)
+    tapped_captions = np.array(tapped_captions)[sort_index].tolist()
+    tapped_audios = np.array(tapped_audios)[sort_index].tolist()
+    tapped_captions_audios_tuples = list(zip(tapped_captions, tapped_audios))
+    tapped_captions_audios = [(c_a[0], c_a[1]) for c_a in tapped_captions_audios_tuples]
+    wandb_dict["audios"].update({"{}_Set_Tapped".format(evaluator_id): [
+        wandb.Audio(c_a[1], caption=c_a[0], sample_rate=44100) for c_a in tapped_captions_audios]})
 
     # PIANO ROLLS
 
