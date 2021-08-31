@@ -24,15 +24,13 @@ all our experiment runs in this [wandb project](https://wandb.ai/marinaniet0/tra
 To try some of our trained models out, you can check out our [colab notebook](./Transformer_Groove_Tap2Drum_Demo.ipynb).
 
 If you want to get the train script running locally, make sure to
-1. Install our conda environment (using [environment.yml](./environment.yml) to get all dependencies, or download all dependencies and install them through `pip`.
+1. Install our conda environment (using [environment.yml](./environment.yml)) to get all dependencies, or download all dependencies and install them through `pip`.
 2. Download the zipped dependencies folder ([dependencies.zip](./dependencies.zip)) and place the repositories at the same level as this one, like so:
 ```
 project_name
 ├───BaseGrooveTransformers
 │   └───...
 ├───GrooveEvaluator
-│   └───...
-├───GrooveMIDI2HVO_PreProcessing
 │   └───...
 ├───hvo_sequence
 │   └───...
