@@ -1,4 +1,4 @@
-name: torch_thesis
+name: torch_transformers_tap2drum
 channels:
   - pytorch
   - main
@@ -381,4 +381,3 @@ dependencies:
     - wheel==0.36.2
     - wrapt==1.12.1
     - yarg==0.1.9
-prefix: C:\Users\marin\anaconda3\envs\torch_thesis
